@@ -1,0 +1,123 @@
+"use client";
+
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
+
+export default function LoginPage() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    // Simulasi logika Login & Redirect berdasarkan Role
+    // Nantinya bagian ini akan memanggil API Backend kamu
+    setTimeout(() => {
+      console.log("Logging in with:", { username, password });
+      
+      // Contoh simulasi redirect:
+      // if (role === 'siswa') router.push('/dashboard/siswa');
+      
+      setIsLoading(false);
+      alert("Login berhasil! (Simulasi)");
+    }, 1500);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-slate-100">
+        
+        {/* Header / Logo */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
+            <Lock className="text-white w-8 h-8" />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-800">Selamat Datang</h1>
+          <p className="text-slate-500 mt-2 text-sm">
+            Silakan masukkan username dan kata sandi Anda untuk mengakses platform pembelajaran.
+          </p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-5">
+          {/* Input Username */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700 ml-1">Username</label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                <User size={18} />
+              </div>
+              <input
+                type="text"
+                required
+                className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                placeholder="Masukkan username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Input Password */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700 ml-1">Kata Sandi</label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                <Lock size={18} />
+              </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                className="block w-full pl-10 pr-10 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Remember Me */}
+          <div className="flex items-center justify-between px-1">
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input 
+                type="checkbox" 
+                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+              />
+              <span className="text-sm text-slate-600">Ingat Saya</span>
+            </label>
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-blue-100 transition-all flex items-center justify-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <Loader2 className="animate-spin" size={20} />
+            ) : (
+              "Masuk ke Dashboard"
+            )}
+          </button>
+        </form>
+
+        {/* Footer info */}
+        <div className="mt-8 text-center text-xs text-slate-400 leading-relaxed">
+          Sistem Informasi Pembelajaran Adaptif <br /> 
+          &copy; 2026 - Lingkungan Sekolah Dasar
+        </div>
+      </div>
+    </div>
+  );
+}
