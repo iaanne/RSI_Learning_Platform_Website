@@ -1,8 +1,3 @@
-// =============================================================================
-// RSI_LEARNING_PLATFORM — Prisma Schema
-// Converted from PostgreSQL schema, mapped to Next.js App Router structure
-// =============================================================================
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,121 +6,61 @@ datasource db {
   provider = "postgresql"
 }
 
-// =============================================================================
-// ENUM DEFINITIONS
-// =============================================================================
-
-enum Role {
-  STUDENT
-  TEACHER
-  PARENT
-  PRINCIPAL
-}
-
-enum Difficulty {
-  EASY
-  MEDIUM
-  HARD
-}
-
-enum AdaptiveLevel {
-  REMEDIAL
-  STANDARD
-  ADVANCED
-}
-
-enum ResultLevel {
-  FAILED
-  PASSED
-  EXCELLENT
-}
-
-enum PointSource {
-  QUIZ
-  VIDEO
-  STREAK
-  BONUS
-}
-
-enum NotifType {
-  SYSTEM
-  QUIZ
-  MESSAGE
-  REPORT
-}
-
-// =============================================================================
-// LEVEL 1: INDEPENDENT TABLES
-// =============================================================================
-
 model User {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email        String   @unique @db.VarChar(255)
-  passwordHash String   @map("password_hash") @db.VarChar(255)
-  role         Role
-  name         String   @db.VarChar(255)
-  imageUrl     String?  @map("image_url") @db.VarChar(255)
-  isActive     Boolean  @default(true) @map("is_active")
-  createdBy    String?  @map("created_by") @db.Uuid
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
-
-  // Self-referencing: who created this account (usually Principal)
-  creator      User?    @relation("UserCreator", fields: [createdBy], references: [id], onDelete: SetNull)
-  createdUsers User[]   @relation("UserCreator")
-
-  // Role-specific profiles
-  student      Student?
-  teacher      Teacher?
-  parent       Parent?
-  principal    Principal?
-
-  // Communication
-  sentMessages     Message[]      @relation("SentMessages")
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email            String         @unique @db.VarChar(255)
+  passwordHash     String         @map("password_hash") @db.VarChar(255)
+  role             String         @db.VarChar(20)
+  name             String         @db.VarChar(255)
+  imageUrl         String?        @map("image_url") @db.VarChar(255)
+  isActive         Boolean?       @default(true) @map("is_active")
+  createdBy        String?        @map("created_by") @db.Uuid
+  createdAt        DateTime?      @default(now()) @map("created_at") @db.Timestamptz(6)
   receivedMessages Message[]      @relation("ReceivedMessages")
+  sentMessages     Message[]      @relation("SentMessages")
   notifications    Notification[]
+  parent           Parent?
+  principal        Principal?
+  student          Student?
+  teacher          Teacher?
+  creator          User?          @relation("UserCreator", fields: [createdBy], references: [id], onUpdate: NoAction, map: "fk_users_creator")
+  createdUsers     User[]         @relation("UserCreator")
 
-  @@index([email])
-  @@index([role])
+  @@index([email], map: "idx_users_email")
+  @@index([role], map: "idx_users_role")
   @@map("users")
 }
 
 model Subject {
-  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name     String  @db.VarChar(100)
-  code     String  @unique @db.VarChar(50)
-  iconUrl  String? @map("icon_url") @db.VarChar(255)
-
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String         @db.VarChar(100)
+  code          String         @unique @db.VarChar(50)
+  iconUrl       String?        @map("icon_url") @db.VarChar(255)
   classSubjects ClassSubject[]
 
   @@map("subjects")
 }
 
-// =============================================================================
-// LEVEL 2: ROLE PROFILES & CLASSES
-// =============================================================================
-
 model Parent {
-  id      String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId  String  @unique @map("user_id") @db.Uuid
-  phone   String? @db.VarChar(20)
-  address String?
-
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId   String    @unique @map("user_id") @db.Uuid
+  phone    String?   @db.VarChar(20)
+  address  String?
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
   students Student[]
 
   @@map("parents")
 }
 
 model Teacher {
-  id     String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId String  @unique @map("user_id") @db.Uuid
-  nip    String? @unique @db.VarChar(50)
-  phone  String? @db.VarChar(20)
-
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  homeroomClass  Class[]        @relation("HomeroomTeacher")
-  classSubjects  ClassSubject[]
-  weeklyReports  WeeklyReport[]
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String         @unique @map("user_id") @db.Uuid
+  nip           String?        @unique @db.VarChar(50)
+  phone         String?        @db.VarChar(20)
+  classSubjects ClassSubject[]
+  homeroomClass Class[]        @relation("HomeroomTeacher")
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  weeklyReports WeeklyReport[]
 
   @@map("teachers")
 }
@@ -134,257 +69,223 @@ model Principal {
   id     String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId String  @unique @map("user_id") @db.Uuid
   nip    String? @unique @db.VarChar(50)
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("principals")
 }
 
 model Class {
-  id                String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name              String  @db.VarChar(50)
-  gradeLevel        Int     @map("grade_level")
-  homeroomTeacherId String? @map("homeroom_teacher_id") @db.Uuid
-  academicYear      Int     @map("academic_year")
-
-  homeroomTeacher Teacher?       @relation("HomeroomTeacher", fields: [homeroomTeacherId], references: [id], onDelete: SetNull)
-  students        Student[]
-  classSubjects   ClassSubject[]
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String         @db.VarChar(50)
+  gradeLevel        Int            @map("grade_level")
+  homeroomTeacherId String?        @map("homeroom_teacher_id") @db.Uuid
+  academicYear      Int            @map("academic_year")
+  classSubjects     ClassSubject[]
+  homeroomTeacher   Teacher?       @relation("HomeroomTeacher", fields: [homeroomTeacherId], references: [id], onUpdate: NoAction)
+  students          Student[]
 
   @@map("classes")
 }
 
-// =============================================================================
-// LEVEL 3: STUDENTS & CLASS RELATIONS
-// =============================================================================
-
 model Student {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId          String    @unique @map("user_id") @db.Uuid
-  classId         String?   @map("class_id") @db.Uuid
-  parentId        String?   @map("parent_id") @db.Uuid
-  nis             String    @unique @db.VarChar(50)
-  birthdate       DateTime? @db.Date
-  totalPoints     Int       @default(0) @map("total_points")
-  currentStreak   Int       @default(0) @map("current_streak")
-  livesRemaining  Int       @default(3) @map("lives_remaining")
+  id             String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String            @unique @map("user_id") @db.Uuid
+  classId        String?           @map("class_id") @db.Uuid
+  parentId       String?           @map("parent_id") @db.Uuid
+  nis            String            @unique @db.VarChar(50)
+  birthdate      DateTime?         @db.Date
+  totalPoints    Int?              @default(0) @map("total_points")
+  currentStreak  Int?              @default(0) @map("current_streak")
+  livesRemaining Int?              @default(3) @map("lives_remaining")
+  pointLogs      PointLog[]
+  quizSessions   QuizSession[]
+  progress       StudentProgress[]
+  class          Class?            @relation(fields: [classId], references: [id], onUpdate: NoAction)
+  parent         Parent?           @relation(fields: [parentId], references: [id], onUpdate: NoAction)
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  videoWatches   VideoWatch[]
+  weeklyReports  WeeklyReport[]
 
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  class           Class?          @relation(fields: [classId], references: [id], onDelete: SetNull)
-  parent          Parent?         @relation(fields: [parentId], references: [id], onDelete: SetNull)
-  progress        StudentProgress[]
-  quizSessions    QuizSession[]
-  videoWatches    VideoWatch[]
-  pointLogs       PointLog[]
-  weeklyReports   WeeklyReport[]
-
-  @@index([nis])
-  @@index([classId])
-  @@index([parentId])
+  @@index([classId], map: "idx_students_class")
+  @@index([nis], map: "idx_students_nis")
+  @@index([parentId], map: "idx_students_parent")
   @@map("students")
 }
 
 model ClassSubject {
-  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  classId      String @map("class_id") @db.Uuid
-  subjectId    String @map("subject_id") @db.Uuid
-  teacherId    String? @map("teacher_id") @db.Uuid
-  semester     Int
-  academicYear Int    @map("academic_year")
-
-  class         Class             @relation(fields: [classId], references: [id], onDelete: Cascade)
-  subject       Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  teacher       Teacher?          @relation(fields: [teacherId], references: [id], onDelete: SetNull)
-  materials     Material[]
+  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  classId         String            @map("class_id") @db.Uuid
+  subjectId       String            @map("subject_id") @db.Uuid
+  teacherId       String?           @map("teacher_id") @db.Uuid
+  semester        Int
+  academicYear    Int               @map("academic_year")
+  class           Class             @relation(fields: [classId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  subject         Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  teacher         Teacher?          @relation(fields: [teacherId], references: [id], onUpdate: NoAction)
+  materials       Material[]
+  quizSessions    QuizSession[]
   studentProgress StudentProgress[]
-  quizSessions  QuizSession[]
-  weeklyReports WeeklyReport[]
+  weeklyReports   WeeklyReport[]
 
   @@unique([classId, subjectId, semester, academicYear])
   @@map("class_subjects")
 }
 
-// =============================================================================
-// LEVEL 4: LEARNING MATERIALS
-// =============================================================================
-
 model Material {
-  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  classSubjectId String     @map("class_subject_id") @db.Uuid
-  title          String     @db.VarChar(255)
-  contentText    String?    @map("content_text")
-  orderIndex     Int        @map("order_index")
-  difficulty     Difficulty @default(MEDIUM)
-  isPublished    Boolean    @default(false) @map("is_published")
+  id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  classSubjectId String        @map("class_subject_id") @db.Uuid
+  title          String        @db.VarChar(255)
+  contentText    String?       @map("content_text")
+  orderIndex     Int           @map("order_index")
+  difficulty     String?       @default("MEDIUM") @db.VarChar(20)
+  isPublished    Boolean?      @default(false) @map("is_published")
+  classSubject   ClassSubject  @relation(fields: [classSubjectId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  questions      Question[]
+  quizSessions   QuizSession[]
+  videos         Video[]
 
-  classSubject ClassSubject @relation(fields: [classSubjectId], references: [id], onDelete: Cascade)
-  videos       Video[]
-  questions    Question[]
-  quizSessions QuizSession[]
-
-  @@index([classSubjectId])
+  @@index([classSubjectId], map: "idx_materials_class_subject")
   @@map("materials")
 }
 
-// =============================================================================
-// LEVEL 5: VIDEOS & QUESTIONS
-// =============================================================================
-
 model Video {
-  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  materialId      String @map("material_id") @db.Uuid
-  title           String @db.VarChar(255)
-  embedUrl        String @map("embed_url") @db.VarChar(255)
-  durationSeconds Int    @map("duration_seconds")
-  pointReward     Int    @default(0) @map("point_reward")
-
-  material     Material     @relation(fields: [materialId], references: [id], onDelete: Cascade)
-  videoWatches VideoWatch[]
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  materialId      String       @map("material_id") @db.Uuid
+  title           String       @db.VarChar(255)
+  embedUrl        String       @map("embed_url") @db.VarChar(255)
+  durationSeconds Int          @map("duration_seconds")
+  pointReward     Int?         @default(0) @map("point_reward")
+  videoWatches    VideoWatch[]
+  material        Material     @relation(fields: [materialId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("videos")
 }
 
 model Question {
-  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  materialId    String     @map("material_id") @db.Uuid
-  questionText  String     @map("question_text")
-  options       Json       // JSONB array of answer choices
-  correctAnswer String     @map("correct_answer") @db.VarChar(255)
-  difficulty    Difficulty @default(MEDIUM)
-  pointReward   Int        @default(0) @map("point_reward")
-  orderIndex    Int        @map("order_index")
+  id            String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  materialId    String       @map("material_id") @db.Uuid
+  questionText  String       @map("question_text")
+  options       Json
+  correctAnswer String       @map("correct_answer") @db.VarChar(255)
+  difficulty    String?      @default("MEDIUM") @db.VarChar(20)
+  pointReward   Int?         @default(0) @map("point_reward")
+  orderIndex    Int          @map("order_index")
+  material      Material     @relation(fields: [materialId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  quizAnswers   QuizAnswer[]
 
-  material    Material     @relation(fields: [materialId], references: [id], onDelete: Cascade)
-  quizAnswers QuizAnswer[]
-
-  @@index([materialId])
+  @@index([materialId], map: "idx_questions_material")
   @@map("questions")
 }
 
-// =============================================================================
-// LEVEL 6: ACTIVITY, PROGRESS & EVALUATION
-// =============================================================================
-
 model StudentProgress {
-  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId         String        @map("student_id") @db.Uuid
-  classSubjectId    String        @map("class_subject_id") @db.Uuid
-  completionPercent Float         @default(0.0) @map("completion_percent")
-  totalScore        Int           @default(0) @map("total_score")
-  adaptiveLevel     AdaptiveLevel @default(STANDARD) @map("adaptive_level")
-  lastActivity      DateTime      @default(now()) @map("last_activity") @db.Timestamptz
-
-  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  classSubject ClassSubject @relation(fields: [classSubjectId], references: [id])
+  id                String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId         String       @map("student_id") @db.Uuid
+  classSubjectId    String       @map("class_subject_id") @db.Uuid
+  completionPercent Float?       @default(0.0) @map("completion_percent") @db.Real
+  totalScore        Int?         @default(0) @map("total_score")
+  adaptiveLevel     String?      @default("STANDARD") @map("adaptive_level") @db.VarChar(20)
+  lastActivity      DateTime?    @default(now()) @map("last_activity") @db.Timestamptz(6)
+  classSubject      ClassSubject @relation(fields: [classSubjectId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  student           Student      @relation(fields: [studentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([studentId, classSubjectId])
-  @@index([studentId, classSubjectId])
+  @@index([studentId, classSubjectId], map: "idx_student_progress_lookup")
   @@map("student_progress")
 }
 
 model QuizSession {
-  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId      String      @map("student_id") @db.Uuid
-  classSubjectId String      @map("class_subject_id") @db.Uuid
-  materialId     String      @map("material_id") @db.Uuid
-  score          Int         @default(0)
-  correctCount   Int         @default(0) @map("correct_count")
-  wrongCount     Int         @default(0) @map("wrong_count")
-  livesUsed      Int         @default(0) @map("lives_used")
-  streakCount    Int         @default(0) @map("streak_count")
-  resultLevel    ResultLevel? @map("result_level")
-  startedAt      DateTime    @default(now()) @map("started_at") @db.Timestamptz
-  finishedAt     DateTime?   @map("finished_at") @db.Timestamptz
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId      String       @map("student_id") @db.Uuid
+  classSubjectId String       @map("class_subject_id") @db.Uuid
+  materialId     String       @map("material_id") @db.Uuid
+  score          Int?         @default(0)
+  correctCount   Int?         @default(0) @map("correct_count")
+  wrongCount     Int?         @default(0) @map("wrong_count")
+  livesUsed      Int?         @default(0) @map("lives_used")
+  streakCount    Int?         @default(0) @map("streak_count")
+  resultLevel    String?      @map("result_level") @db.VarChar(20)
+  startedAt      DateTime?    @default(now()) @map("started_at") @db.Timestamptz(6)
+  finishedAt     DateTime?    @map("finished_at") @db.Timestamptz(6)
+  answers        QuizAnswer[]
+  classSubject   ClassSubject @relation(fields: [classSubjectId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  material       Material     @relation(fields: [materialId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  classSubject ClassSubject @relation(fields: [classSubjectId], references: [id])
-  material     Material     @relation(fields: [materialId], references: [id])
-  answers      QuizAnswer[]
-
-  @@index([studentId])
+  @@index([studentId], map: "idx_quiz_sessions_student")
   @@map("quiz_sessions")
 }
 
 model QuizAnswer {
-  id           String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionId    String  @map("session_id") @db.Uuid
-  questionId   String  @map("question_id") @db.Uuid
-  answerGiven  String  @map("answer_given") @db.VarChar(255)
-  isCorrect    Boolean @map("is_correct")
-  timeTakenSec Int?    @map("time_taken_sec")
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId    String      @map("session_id") @db.Uuid
+  questionId   String      @map("question_id") @db.Uuid
+  answerGiven  String      @map("answer_given") @db.VarChar(255)
+  isCorrect    Boolean     @map("is_correct")
+  timeTakenSec Int?        @map("time_taken_sec")
+  question     Question    @relation(fields: [questionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  session      QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  session  QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  question Question    @relation(fields: [questionId], references: [id])
-
-  @@index([sessionId])
+  @@index([sessionId], map: "idx_quiz_answers_session")
   @@map("quiz_answers")
 }
 
 model VideoWatch {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId      String   @map("student_id") @db.Uuid
-  videoId        String   @map("video_id") @db.Uuid
-  watchedSeconds Int      @default(0) @map("watched_seconds")
-  isCompleted    Boolean  @default(false) @map("is_completed")
-  watchedAt      DateTime @default(now()) @map("watched_at") @db.Timestamptz
-
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  video   Video   @relation(fields: [videoId], references: [id])
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId      String    @map("student_id") @db.Uuid
+  videoId        String    @map("video_id") @db.Uuid
+  watchedSeconds Int?      @default(0) @map("watched_seconds")
+  isCompleted    Boolean?  @default(false) @map("is_completed")
+  watchedAt      DateTime? @default(now()) @map("watched_at") @db.Timestamptz(6)
+  student        Student   @relation(fields: [studentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  video          Video     @relation(fields: [videoId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("video_watches")
 }
 
 model PointLog {
-  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId    String      @map("student_id") @db.Uuid
-  pointsEarned Int         @map("points_earned")
-  sourceType   PointSource @map("source_type")
-  sourceId     String?     @map("source_id") @db.Uuid
-  description  String?     @db.VarChar(255)
-  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId    String    @map("student_id") @db.Uuid
+  pointsEarned Int       @map("points_earned")
+  sourceType   String    @map("source_type") @db.VarChar(20)
+  sourceId     String?   @map("source_id") @db.Uuid
+  description  String?   @db.VarChar(255)
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  student      Student   @relation(fields: [studentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@index([studentId])
+  @@index([studentId], map: "idx_point_logs_student")
   @@map("point_logs")
 }
 
 model WeeklyReport {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId      String   @map("student_id") @db.Uuid
-  classSubjectId String   @map("class_subject_id") @db.Uuid
-  teacherId      String?  @map("teacher_id") @db.Uuid
-  weekStart      DateTime @map("week_start") @db.Date
-  avgScore       Int      @default(0) @map("avg_score")
-  completionRate Float    @default(0.0) @map("completion_rate")
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId      String       @map("student_id") @db.Uuid
+  classSubjectId String       @map("class_subject_id") @db.Uuid
+  teacherId      String?      @map("teacher_id") @db.Uuid
+  weekStart      DateTime     @map("week_start") @db.Date
+  avgScore       Int?         @default(0) @map("avg_score")
+  completionRate Float?       @default(0.0) @map("completion_rate") @db.Real
   recommendation String?
-  kkm_achieved   Boolean  @default(false)
-  generatedAt    DateTime @default(now()) @map("generated_at") @db.Timestamptz
+  kkm_achieved   Boolean?     @default(false)
+  generatedAt    DateTime?    @default(now()) @map("generated_at") @db.Timestamptz(6)
+  classSubject   ClassSubject @relation(fields: [classSubjectId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  student        Student      @relation(fields: [studentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  teacher        Teacher?     @relation(fields: [teacherId], references: [id], onUpdate: NoAction)
 
-  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  classSubject ClassSubject @relation(fields: [classSubjectId], references: [id])
-  teacher      Teacher?     @relation(fields: [teacherId], references: [id], onDelete: SetNull)
-
-  @@index([studentId, weekStart])
+  @@index([studentId, weekStart], map: "idx_weekly_reports_student")
   @@map("weekly_reports")
 }
 
-// =============================================================================
-// LEVEL 7: NOTIFICATIONS & MESSAGES
-// =============================================================================
-
 model Message {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  senderId   String   @map("sender_id") @db.Uuid
-  receiverId String   @map("receiver_id") @db.Uuid
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  senderId   String    @map("sender_id") @db.Uuid
+  receiverId String    @map("receiver_id") @db.Uuid
   content    String
-  isRead     Boolean  @default(false) @map("is_read")
-  sentAt     DateTime @default(now()) @map("sent_at") @db.Timestamptz
+  isRead     Boolean?  @default(false) @map("is_read")
+  sentAt     DateTime? @default(now()) @map("sent_at") @db.Timestamptz(6)
+  receiver   User      @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  sender     User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  sender   User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
-
-  @@index([receiverId, isRead])
+  @@index([receiverId, isRead], map: "idx_messages_receiver")
   @@map("messages")
 }
 
@@ -393,12 +294,11 @@ model Notification {
   userId    String    @map("user_id") @db.Uuid
   title     String    @db.VarChar(150)
   body      String
-  notifType NotifType @map("notif_type")
-  isRead    Boolean   @default(false) @map("is_read")
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  notifType String    @map("notif_type") @db.VarChar(20)
+  isRead    Boolean?  @default(false) @map("is_read")
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, isRead])
+  @@index([userId, isRead], map: "idx_notifications_user")
   @@map("notifications")
 }
