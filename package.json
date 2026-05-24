@@ -20,16 +20,25 @@
   "devDependencies": {
     "@prisma/config": "^7.8.0",
     "@tailwindcss/postcss": "^4",
+<<<<<<< HEAD
     "@types/node": "^20",
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
+=======
+    "@types/node": "20.19.41",
+    "@types/react": "19.2.15",
+>>>>>>> 4f9d8257fc9951834371f9d958511e55897ff33d
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
+<<<<<<< HEAD
     "tsx": "^4.22.3",
     "typescript": "^5"
+=======
+    "typescript": "5.9.3"
+>>>>>>> 4f9d8257fc9951834371f9d958511e55897ff33d
   }
 }
