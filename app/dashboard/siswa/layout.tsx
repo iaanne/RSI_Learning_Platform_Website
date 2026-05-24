@@ -1,68 +1,184 @@
-import React from "react";
+// app/dashboard/siswa/layout.tsx
+// Server Component — ambil session dari cookie, query DB untuk data siswa
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, BookOpen, History, Bell } from "lucide-react";
+import { getSession } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { LayoutDashboard, BookOpen, History, Bell, Flame, LogOut } from "lucide-react";
 
-export default function SiswaLayout({
+export default async function SiswaLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // 1. Cek sesi — middleware sudah guard, ini double-check di server
+  const session = await getSession();
+  if (!session || session.role !== "STUDENT") {
+    redirect("/auth/login");
+  }
+
+  // 2. Ambil data siswa dari DB (streak, lives, poin, nama)
+  const student = await db.student.findFirst({
+    where: { user: { id: session.userId } },
+    select: {
+      id: true,
+      currentStreak: true,
+      livesRemaining: true,
+      totalPoints: true,
+      user: {
+        select: { name: true, imageUrl: true },
+      },
+    },
+  });
+
+  if (!student) redirect("/auth/login");
+
+  const firstName = student.user.name.split(" ")[0];
+  const initials = student.user.name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  // Format tanggal Indonesia
+  const today = new Date().toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC]">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 p-6 hidden md:flex flex-col">
-        <div className="font-black text-2xl text-indigo-600 mb-10 tracking-tight">
-          L-PLATFORM
+    <div className="flex min-h-screen bg-[#F0F2F8] font-sans">
+      {/* ── Sidebar ─────────────────────────────────────────────────────── */}
+      <aside className="w-60 bg-white border-r border-slate-100 flex flex-col hidden md:flex shrink-0">
+        {/* Logo */}
+        <div className="px-6 pt-6 pb-5 border-b border-slate-100">
+          <span className="text-lg font-black tracking-tighter text-indigo-700">
+            L·PLATFORM
+          </span>
+          <p className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-widest font-medium">
+            SD RSI Learning
+          </p>
         </div>
-        
-        <nav className="space-y-2 flex-1">
-          <Link href="/dashboard/siswa" className="flex items-center space-x-3 text-indigo-600 font-bold p-3 bg-indigo-50 rounded-2xl transition-all">
-            <LayoutDashboard size={20} />
-            <span>Beranda</span>
-          </Link>
-          <Link href="/dashboard/siswa/mapel" className="flex items-center space-x-3 text-slate-500 p-3 hover:bg-slate-50 rounded-2xl cursor-pointer transition-all font-semibold">
-            <BookOpen size={20} />
-            <span>Materi Saya</span>
-          </Link>
-          <div className="flex items-center space-x-3 text-slate-500 p-3 hover:bg-slate-50 rounded-2xl cursor-pointer transition-all font-semibold">
-            <History size={20} />
-            <span>Riwayat Nilai</span>
+
+        {/* Profil mini */}
+        <div className="px-5 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-black shadow-md shadow-indigo-100 shrink-0">
+              {student.user.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={student.user.imageUrl}
+                  alt={student.user.name}
+                  className="w-full h-full object-cover rounded-xl"
+                />
+              ) : (
+                initials
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-slate-800 truncate">
+                {student.user.name}
+              </p>
+              <p className="text-[11px] text-slate-400">Siswa</p>
+            </div>
           </div>
+
+          {/* Streak & Lives badges */}
+          <div className="flex gap-2 mt-3">
+            <span className="flex items-center gap-1 text-[11px] font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-lg border border-orange-100">
+              <Flame size={12} className="fill-orange-400 text-orange-400" />
+              {student.currentStreak}d streak
+            </span>
+            <span className="flex items-center gap-1 text-[11px] font-bold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-100">
+              {"❤️".repeat(Math.max(0, student.livesRemaining))} {student.livesRemaining}
+            </span>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+          <Link
+            href="/dashboard/siswa"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-indigo-700 bg-indigo-50 font-semibold text-sm transition-all"
+          >
+            <LayoutDashboard size={18} />
+            Beranda
+          </Link>
+          <Link
+            href="/dashboard/siswa/mapel"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-medium text-sm transition-all"
+          >
+            <BookOpen size={18} />
+            Materi Saya
+          </Link>
+          <Link
+            href="/dashboard/siswa/quiz"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-medium text-sm transition-all"
+          >
+            <History size={18} />
+            Riwayat Quiz
+          </Link>
         </nav>
 
-        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-          <p className="text-xs font-bold text-slate-400 uppercase mb-2">Progres Mingguan</p>
-          <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-            <div className="bg-green-500 h-full w-[65%]"></div>
+        {/* Footer sidebar: poin + logout */}
+        <div className="px-4 pb-5 space-y-3">
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-3">
+            <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">
+              Total Poin
+            </p>
+            <p className="text-2xl font-black text-indigo-700">
+              {student.totalPoints.toLocaleString("id-ID")}
+              <span className="text-sm font-medium text-indigo-400 ml-1">pts</span>
+            </p>
           </div>
-          <p className="text-[10px] text-slate-500 mt-2 font-medium">Sedikit lagi capai target!</p>
+
+          <form action="/api/auth/logout" method="POST">
+            <button
+              type="submit"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 text-sm font-medium transition-all"
+            >
+              <LogOut size={16} />
+              Keluar
+            </button>
+          </form>
         </div>
       </aside>
 
-      {/* Area Konten Utama */}
-      <main className="flex-1 p-4 md:p-8">
-        <header className="flex justify-between items-center mb-8">
+      {/* ── Main ────────────────────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Topbar */}
+        <header className="bg-white border-b border-slate-100 px-6 py-4 flex justify-between items-center shrink-0">
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Panel Siswa</h2>
-            <p className="text-xs text-slate-400 font-medium">Senin, 14 April 2026</p>
+            <h2 className="text-base font-bold text-slate-800">Panel Siswa</h2>
+            <p className="text-xs text-slate-400 capitalize">{today}</p>
           </div>
-          
-          <div className="flex items-center space-x-4">
-            <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
-              <Bell size={20} />
-            </button>
-            <div className="h-8 w-[1px] bg-slate-200 mx-2"></div>
-            <div className="flex items-center space-x-3">
-              <span className="text-sm font-bold text-slate-700 hidden sm:block">Talitha</span>
-              <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-black shadow-lg shadow-indigo-100">
-                T
-              </div>
+
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard/siswa/notifications"
+              className="p-2 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-indigo-50 transition-all"
+              aria-label="Notifikasi"
+            >
+              <Bell size={18} />
+            </Link>
+            <div className="h-6 w-px bg-slate-100" />
+            <span className="text-sm font-semibold text-slate-700 hidden sm:block">
+              {firstName}
+            </span>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-black shadow-md shadow-indigo-100">
+              {initials}
             </div>
           </div>
         </header>
 
-        {children}
-      </main>
+        {/* Page content */}
+        <main className="flex-1 p-6 overflow-auto">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
