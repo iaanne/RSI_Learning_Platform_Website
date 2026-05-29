@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
-
 // GET /api/materials?classSubjectId=xxx
 export async function GET(req: NextRequest) {
   try {
@@ -10,10 +9,8 @@ export async function GET(req: NextRequest) {
     if (!session) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
-
     const { searchParams } = new URL(req.url);
     const classSubjectId = searchParams.get("classSubjectId");
-
     const materials = await db.material.findMany({
       where: {
         ...(classSubjectId && { classSubjectId }),
@@ -31,7 +28,6 @@ export async function GET(req: NextRequest) {
       },
       orderBy: { orderIndex: "asc" },
     });
-
     return NextResponse.json(materials);
   } catch (error) {
     console.error("[MATERIALS_GET]", error);
@@ -41,7 +37,6 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-
 // POST /api/materials — create new material (TEACHER only)
 export async function POST(req: NextRequest) {
   try {
@@ -49,10 +44,8 @@ export async function POST(req: NextRequest) {
     if (!session || session.role !== "TEACHER") {
       return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
     }
-
     const body = await req.json();
     const { classSubjectId, title, contentText, orderIndex, difficulty, embedUrl, videoTitle } = body;
-
     // Validate required fields
     if (!classSubjectId || !title) {
       return NextResponse.json(
@@ -60,7 +53,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
     // Validate YouTube URL if provided
     if (embedUrl) {
       const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
@@ -71,7 +63,6 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-
     // Create material + optional video in one transaction
     const material = await db.$transaction(async (tx) => {
       const newMaterial = await tx.material.create({
@@ -84,7 +75,6 @@ export async function POST(req: NextRequest) {
           isPublished:  true,
         },
       });
-
       if (embedUrl && videoTitle) {
         await tx.video.create({
           data: {
@@ -96,10 +86,8 @@ export async function POST(req: NextRequest) {
           },
         });
       }
-
       return newMaterial;
     });
-
     return NextResponse.json(
       { success: true, message: "Materi berhasil disimpan", material },
       { status: 201 }

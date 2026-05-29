@@ -1,14 +1,105 @@
 "use client";
-import React from "react";
-import { ChevronLeft, Plus, Brain, Trash2, Edit3, CheckCircle, HelpCircle } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { ChevronLeft, Plus, Brain, Trash2, Edit3, CheckCircle, X, Save } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
-export default function KelolaSoalSederhana() {
-  const dummySoal = [
-    { id: 1, tanya: "Bagian tumbuhan yang ada di dalam tanah disebut?", level: "Mudah", opsi: "Akar" },
-    { id: 2, tanya: "Apa gas yang dilepaskan tumbuhan saat fotosintesis?", level: "Sedang", opsi: "Oksigen" },
-    { id: 3, tanya: "Mengapa fotosintesis sangat penting bagi manusia?", level: "Sulit", opsi: "Menghasilkan Oksigen untuk bernapas" },
-  ];
+type Question = {
+  id: string;
+  questionText: string;
+  options: string[];
+  correctAnswer: string;
+  difficulty: string;
+};
+
+const LEVEL_LABEL: Record<string, string> = { EASY: "Mudah", MEDIUM: "Sedang", HARD: "Sulit" };
+const LEVEL_COLOR: Record<string, string> = {
+  EASY:   "bg-green-100 text-green-700",
+  MEDIUM: "bg-amber-100 text-amber-700",
+  HARD:   "bg-rose-100  text-rose-700",
+};
+const LEVEL_BAR: Record<string, string> = {
+  EASY: "bg-green-500", MEDIUM: "bg-amber-500", HARD: "bg-rose-500",
+};
+
+export default function KelolaSoal() {
+  const searchParams   = useSearchParams();
+  const materialId     = searchParams.get("materialId") ?? "";
+  const classSubjectId = searchParams.get("classSubjectId") ?? "";
+
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [showForm, setShowForm]   = useState(false);
+  const [saving, setSaving]       = useState(false);
+  const [error, setError]         = useState("");
+
+  // Form state
+  const [qText, setQText]         = useState("");
+  const [opts, setOpts]           = useState(["","","",""]);
+  const [correct, setCorrect]     = useState("A");
+  const [diff, setDiff]           = useState("MEDIUM");
+
+  useEffect(() => {
+    if (!materialId) { setLoading(false); return; }
+    fetch(`/api/questions?materialId=${materialId}`)
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setQuestions(d); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [materialId]);
+
+  const counts = {
+    EASY:   questions.filter(q => q.difficulty === "EASY").length,
+    MEDIUM: questions.filter(q => q.difficulty === "MEDIUM").length,
+    HARD:   questions.filter(q => q.difficulty === "HARD").length,
+  };
+  const CAPS = { EASY: 10, MEDIUM: 25, HARD: 15 };
+
+  async function handleSave() {
+    setError("");
+    if (!qText.trim()) { setError("Teks pertanyaan wajib diisi."); return; }
+    if (opts.some(o => !o.trim())) { setError("Semua 4 pilihan jawaban wajib diisi."); return; }
+    if (!materialId) { setError("materialId tidak ditemukan."); return; }
+    if (counts[diff as keyof typeof counts] >= CAPS[diff as keyof typeof CAPS]) {
+      setError(`Kapasitas soal ${LEVEL_LABEL[diff]} untuk bab ini sudah penuh.`); return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          materialId,        // add this line
+          questionText:  qText.trim(),
+          options:       opts,
+          correctAnswer: opts[["A","B","C","D"].indexOf(correct)],
+          difficulty:    diff,
+          orderIndex:    questions.length + 1,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setQuestions(prev => [...prev, data.question ?? data]);
+        setShowForm(false);
+        setQText(""); setOpts(["","","",""]); setCorrect("A"); setDiff("MEDIUM");
+      } else {
+        setError(data.message ?? "Gagal menyimpan soal.");
+      }
+    } catch {
+      setError("Koneksi gagal. Coba lagi.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("Hapus soal ini?")) return;
+    try {
+      await fetch(`/api/questions/${id}`, { method: "DELETE" });
+      setQuestions(prev => prev.filter(q => q.id !== id));
+    } catch {}
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-20">
@@ -19,86 +110,127 @@ export default function KelolaSoalSederhana() {
       <div className="flex justify-between items-center bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
         <div>
           <h1 className="text-2xl font-black text-slate-800">Bank Soal Adaptif 🧠</h1>
-          <p className="text-slate-500 text-sm font-medium">IPA: Bab 2 - Fotosintesis</p>
+          <p className="text-slate-500 text-sm font-medium">
+            {materialId ? `Material ID: ${materialId.slice(0,8)}...` : "Pilih materi dari halaman Mapel"}
+          </p>
         </div>
-        <button className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black flex items-center space-x-2 shadow-lg shadow-indigo-100 hover:scale-105 transition-all">
-          <Plus size={18} />
-          <span>Buat Soal Baru</span>
+        <button
+          onClick={() => setShowForm(v => !v)}
+          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black flex items-center space-x-2 shadow-lg shadow-indigo-100 hover:scale-105 transition-all"
+        >
+          {showForm ? <X size={18} /> : <Plus size={18} />}
+          <span>{showForm ? "Batal" : "Buat Soal Baru"}</span>
         </button>
       </div>
 
-      {/* Info Mekanisme Adaptif */}
+      {/* Adaptive stats bar */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 rounded-[32px] text-white flex items-center justify-between shadow-xl shadow-indigo-100">
         <div className="space-y-1">
           <h4 className="text-lg font-black flex items-center space-x-2">
-            <Brain size={24} />
-            <span>Mode Adaptif Aktif</span>
+            <Brain size={24} /><span>Mode Adaptif Aktif</span>
           </h4>
-          <p className="text-indigo-100 text-sm opacity-80 max-w-md">Sistem akan otomatis menyesuaikan soal berdasarkan kemampuan siswa (Mudah → Sedang → Sulit).</p>
+          <p className="text-indigo-100 text-sm opacity-80 max-w-md">
+            Mudah → Sedang → Sulit (maks: 10/25/15 soal)
+          </p>
         </div>
         <div className="hidden md:flex space-x-4">
-          <div className="text-center">
-            <p className="text-2xl font-black">10</p>
-            <p className="text-[10px] uppercase font-bold opacity-60">Mudah</p>
-          </div>
-          <div className="text-center border-x border-white/20 px-4">
-            <p className="text-2xl font-black">15</p>
-            <p className="text-[10px] uppercase font-bold opacity-60">Sedang</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-black">5</p>
-            <p className="text-[10px] uppercase font-bold opacity-60">Sulit</p>
-          </div>
+          {(["EASY","MEDIUM","HARD"] as const).map(lv => (
+            <div key={lv} className="text-center">
+              <p className="text-2xl font-black">{counts[lv]}<span className="text-sm opacity-50">/{CAPS[lv]}</span></p>
+              <p className="text-[10px] uppercase font-bold opacity-60">{LEVEL_LABEL[lv]}</p>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* List Soal */}
-      <div className="space-y-4">
-        {dummySoal.map((soal) => (
-          <div key={soal.id} className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm hover:border-indigo-300 transition-all group relative overflow-hidden">
-            {/* Indikator Level di samping */}
-            <div className={`absolute left-0 top-0 bottom-0 w-2 ${
-              soal.level === 'Mudah' ? 'bg-green-500' : 
-              soal.level === 'Sedang' ? 'bg-amber-500' : 'bg-rose-500'
-            }`}></div>
+      {/* New question form */}
+      {showForm && (
+        <div className="bg-white p-8 rounded-[32px] border-2 border-indigo-200 shadow-sm space-y-6">
+          <h3 className="font-black text-slate-800 text-lg">Buat Soal Baru</h3>
 
-            <div className="flex flex-col md:flex-row justify-between gap-6">
-              <div className="space-y-3 flex-1">
-                <div className="flex items-center space-x-3">
-                  <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${
-                    soal.level === 'Mudah' ? 'bg-green-100 text-green-700' :
-                    soal.level === 'Sedang' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'
-                  }`}>
-                    Level {soal.level}
-                  </span>
-                </div>
-                <h4 className="text-xl font-bold text-slate-800 leading-tight">
-                  <span className="text-slate-300 mr-2">Q:</span>
-                  {soal.tanya}
-                </h4>
-                <div className="flex items-center space-x-2 text-sm text-green-600 font-bold bg-green-50 w-fit px-3 py-1 rounded-lg">
-                  <CheckCircle size={14} />
-                  <span>Jawaban: {soal.opsi}</span>
-                </div>
+          <div>
+            <label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-2">Teks Pertanyaan *</label>
+            <textarea
+              value={qText} onChange={e => setQText(e.target.value)}
+              rows={3} placeholder="Tulis pertanyaan di sini..."
+              className="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-700 border-2 border-slate-100"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {["A","B","C","D"].map((ltr, i) => (
+              <div key={ltr} className="flex items-center space-x-3">
+                <span className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs flex-shrink-0 ${
+                  correct === ltr ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500"
+                }`}>{ltr}</span>
+                <input
+                  type="text" value={opts[i]} onChange={e => setOpts(o => o.map((v,j) => j===i ? e.target.value : v))}
+                  placeholder={`Pilihan ${ltr}`}
+                  className="flex-1 p-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 font-medium text-slate-700 border border-slate-100"
+                />
+                <button onClick={() => setCorrect(ltr)} className={`text-xs font-black px-2 py-1 rounded-lg ${correct === ltr ? "text-emerald-600" : "text-slate-300 hover:text-slate-500"}`}>
+                  ✓
+                </button>
               </div>
+            ))}
+          </div>
 
-              <div className="flex md:flex-col space-x-2 md:space-x-0 md:space-y-2 justify-end">
-                <button className="p-4 bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 rounded-2xl transition-all">
-                  <Edit3 size={20} />
-                </button>
-                <button className="p-4 bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 rounded-2xl transition-all">
-                  <Trash2 size={20} />
-                </button>
+          <div className="flex items-center space-x-4">
+            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Tingkat Kesulitan:</label>
+            {(["EASY","MEDIUM","HARD"] as const).map(lv => (
+              <button key={lv} onClick={() => setDiff(lv)}
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${diff === lv ? LEVEL_COLOR[lv] : "bg-slate-100 text-slate-400"}`}>
+                {LEVEL_LABEL[lv]}
+              </button>
+            ))}
+          </div>
+
+          {error && <p className="text-rose-600 font-bold text-sm">{error}</p>}
+
+          <button onClick={handleSave} disabled={saving}
+            className="flex items-center space-x-2 bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black disabled:opacity-60 hover:bg-indigo-700 transition-all">
+            <Save size={18} />
+            <span>{saving ? "Menyimpan..." : "Simpan Soal"}</span>
+          </button>
+        </div>
+      )}
+
+      {/* Question list */}
+      {loading ? (
+        <p className="text-slate-400 text-center py-12">Memuat soal...</p>
+      ) : questions.length === 0 ? (
+        <p className="text-slate-400 text-center py-12">Belum ada soal. Klik "Buat Soal Baru" untuk mulai.</p>
+      ) : (
+        <div className="space-y-4">
+          {questions.map(q => (
+            <div key={q.id} className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm hover:border-indigo-300 transition-all relative overflow-hidden">
+              <div className={`absolute left-0 top-0 bottom-0 w-2 ${LEVEL_BAR[q.difficulty] ?? "bg-slate-300"}`} />
+              <div className="flex flex-col md:flex-row justify-between gap-6">
+                <div className="space-y-3 flex-1">
+                  <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${LEVEL_COLOR[q.difficulty] ?? ""}`}>
+                    Level {LEVEL_LABEL[q.difficulty] ?? q.difficulty}
+                  </span>
+                  <h4 className="text-xl font-bold text-slate-800 leading-tight">
+                    <span className="text-slate-300 mr-2">Q:</span>{q.questionText}
+                  </h4>
+                  <div className="flex items-center space-x-2 text-sm text-green-600 font-bold bg-green-50 w-fit px-3 py-1 rounded-lg">
+                    <CheckCircle size={14} />
+                    <span>Jawaban: {q.correctAnswer}</span>
+                  </div>
+                </div>
+                <div className="flex md:flex-col space-x-2 md:space-x-0 md:space-y-2 justify-end">
+                  <button className="p-4 bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 rounded-2xl transition-all">
+                    <Edit3 size={20} />
+                  </button>
+                  <button onClick={() => handleDelete(q.id)} className="p-4 bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 rounded-2xl transition-all">
+                    <Trash2 size={20} />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      <button className="w-full py-6 border-4 border-dashed border-slate-100 rounded-[32px] text-slate-300 font-black text-xl hover:text-indigo-400 hover:border-indigo-100 transition-all flex items-center justify-center space-x-3">
-        <Plus size={28} />
-        <span>Tambah Soal Ke Bab Ini</span>
-      </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
