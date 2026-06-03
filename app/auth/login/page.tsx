@@ -48,14 +48,14 @@ export default function LoginPage() {
           </div>
           <h1 className="text-2xl font-bold text-slate-800">Selamat Datang</h1>
           <p className="text-slate-500 mt-2 text-sm">
-            Silakan masukkan username dan kata sandi Anda untuk mengakses platform pembelajaran.
+            Silakan masukkan email dan kata sandi Anda untuk mengakses platform pembelajaran.
           </p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
-          {/* Input Username */}
+          {/* Input Email */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700 ml-1">Username</label>
+            <label className="text-sm font-semibold text-slate-700 ml-1">Email</label>
             <div className="relative group">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-500 transition-colors">
                 <User size={18} />
@@ -64,7 +64,7 @@ export default function LoginPage() {
                 type="text"
                 required
                 className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl bg-slate-50 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
-                placeholder="Masukkan username"
+                placeholder="Masukkan email"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />

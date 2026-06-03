@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { UserPlus, Mail, Key, BarChart3, Users2, AlertCircle, ChevronRight, Loader2 } from "lucide-react";
+import { UserPlus, BarChart3, Users2, AlertCircle, ChevronRight, Loader2 } from "lucide-react";
 
 interface Guru {
   id: string;
@@ -98,20 +98,10 @@ export default function ManajemenGuruRinci() {
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <button className="flex-1 lg:flex-none bg-slate-50 hover:bg-indigo-600 hover:text-white px-4 py-3 rounded-2xl transition-all text-slate-500 font-bold text-xs flex items-center space-x-2">
-                  <Mail size={16} />
-                  <span className="lg:hidden">Email</span>
-                </button>
-                <button className="flex-1 lg:flex-none bg-slate-50 hover:bg-amber-500 hover:text-white px-4 py-3 rounded-2xl transition-all text-slate-500 font-bold text-xs flex items-center space-x-2">
-                  <Key size={16} />
-                  <span className="lg:hidden">Reset</span>
-                </button>
-                <button className="flex-1 lg:flex-none bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white px-6 py-3 rounded-2xl transition-all font-black text-xs flex items-center space-x-2">
-                  <span>Detail Kinerja</span>
-                  <ChevronRight size={16} />
-                </button>
-              </div>
+              <button className="bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white px-6 py-3 rounded-2xl transition-all font-black text-xs flex items-center space-x-2">
+                <span>Detail Kinerja</span>
+                <ChevronRight size={16} />
+              </button>
             </div>
           </div>
         ))}
