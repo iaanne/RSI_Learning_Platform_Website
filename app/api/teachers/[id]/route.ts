@@ -30,7 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const detail = {
     name: teacher.user.name,
     email: teacher.user.email,
-    homeroom: teacher.homeroomClass?.[0]?.name ?? null,
+    homeroom: teacher.homeroomClass?.map(c => c.name).join(", ") ?? null,
     subjects: teacher.classSubjects.map((cs) => ({
       subject: cs.subject.name,
       code: cs.subject.code,

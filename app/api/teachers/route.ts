@@ -29,14 +29,24 @@ export async function GET(req: NextRequest) {
     const totalSiswa = t.classSubjects.reduce((sum, cs) => sum + cs.studentProgress.length, 0);
     const tertinggal = allProgress.filter((p) => p < 70).length;
 
+    const uniqueSubjects = [...new Set(t.classSubjects.map((cs) => cs.subject.name))];
+    let role: string;
+    if (t.homeroomClass?.length) {
+      role = `Wali ${t.homeroomClass.map(c => c.name).join(", ")}`;
+    } else if (uniqueSubjects.length === 1) {
+      role = `Guru ${uniqueSubjects[0]}`;
+    } else {
+      role = uniqueSubjects.join(", ");
+    }
+
     return {
       id: t.id,
       userId: t.userId,
       name: t.user.name,
       email: t.user.email,
       nip: t.nip,
-      subjects: [...new Set(t.classSubjects.map((cs) => cs.subject.name))],
-      role: t.homeroomClass?.length ? `Wali ${t.homeroomClass.map(c => c.name).join(", ")}` : t.classSubjects.map(cs => cs.subject.name).join(", "),
+      subjects: uniqueSubjects,
+      role,
       status: t.user.isActive ? "Aktif" : "Nonaktif",
       totalSiswa,
       ketuntasan: avgKetuntasan,
