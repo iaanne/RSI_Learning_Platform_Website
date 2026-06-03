@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { signToken, setSessionCookie } from "@/lib/auth";
+import { signToken, setSessionCookie, type Role } from "@/lib/auth";
 import { loginSchema } from "@/lib/validations/auth";
 
 export async function POST(req: NextRequest) {
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     const token = await signToken({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: user.role as Role,
       name: user.name,
     });
 
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
         user: {
           id: user.id,
           email: user.email,
-          role: user.role,
+      role: user.role as Role,
           name: user.name,
           imageUrl: user.imageUrl,
         },
