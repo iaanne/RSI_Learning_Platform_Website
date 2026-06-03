@@ -50,10 +50,12 @@ export default function GuruLayout({ children }: { children: React.ReactNode }) 
         </nav>
 
         <div className="p-6 border-t border-slate-800/50">
-          <Link href="/auth/login" className="w-full flex items-center space-x-3 text-slate-500 hover:text-rose-400 p-4 rounded-2xl transition-all hover:bg-rose-500/5">
-            <LogOut size={20} />
-            <span className="font-bold">Keluar Sistem</span>
-          </Link>
+          <form action="/api/auth/logout" method="POST">
+            <button type="submit" className="w-full flex items-center space-x-3 text-slate-500 hover:text-rose-400 p-4 rounded-2xl transition-all hover:bg-rose-500/5">
+              <LogOut size={20} />
+              <span className="font-bold">Keluar Sistem</span>
+            </button>
+          </form>
         </div>
       </aside>
 

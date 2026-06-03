@@ -45,10 +45,12 @@ export default function OrtuLayout({ children }: { children: React.ReactNode }) 
         </nav>
 
         <div className="p-6 border-t border-slate-50">
-          <Link href="/auth/login" className="flex items-center space-x-3 text-rose-500 hover:bg-rose-50 p-4 rounded-2xl transition-all font-bold text-sm">
-            <LogOut size={20} />
-            <span>Keluar Sistem</span>
-          </Link>
+          <form action="/api/auth/logout" method="POST">
+            <button type="submit" className="flex items-center space-x-3 text-rose-500 hover:bg-rose-50 p-4 rounded-2xl transition-all font-bold text-sm w-full">
+              <LogOut size={20} />
+              <span>Keluar Sistem</span>
+            </button>
+          </form>
         </div>
       </aside>
 

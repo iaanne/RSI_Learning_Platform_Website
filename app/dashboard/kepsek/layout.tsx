@@ -44,10 +44,12 @@ export default function KepsekLayout({ children }: { children: React.ReactNode }
         </nav>
 
         <div className="p-8 border-t border-indigo-900/50">
-          <button className="flex items-center space-x-3 text-indigo-400 hover:text-rose-400 transition-colors text-sm font-bold group">
-            <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />
-            <span>Keluar Sistem</span>
-          </button>
+          <form action="/api/auth/logout" method="POST">
+            <button type="submit" className="flex items-center space-x-3 text-indigo-400 hover:text-rose-400 transition-colors text-sm font-bold group">
+              <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />
+              <span>Keluar Sistem</span>
+            </button>
+          </form>
         </div>
       </aside>
 
