@@ -1,13 +1,21 @@
-"use client";
-import React from "react";
+import { db } from "@/lib/db";
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { ShieldCheck, UserPlus, Fingerprint, Activity } from "lucide-react";
 
-export default function SecurityAudit() {
-  const securityLogs = [
-    { time: "10:45", action: "Pendaftaran Akun Baru", detail: "Siswa: Ahmad Dani (4-B)", type: "creation" },
-    { time: "09:12", action: "Perubahan Password", detail: "Ortu: Ibu Sukma (4-B)", type: "update" },
-    { time: "08:00", action: "Backup Database", detail: "Otomatis oleh Sistem", type: "system" },
-  ];
+export default async function SecurityAudit() {
+  const session = await getSession();
+  if (!session || session.role !== "PRINCIPAL") redirect("/auth/login");
+
+  const [totalGuru, totalSiswa, totalOrtu, recentLogs] = await Promise.all([
+    db.teacher.count(),
+    db.student.count(),
+    db.parent.count(),
+    db.notification.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
+  ]);
 
   return (
     <div className="max-w-5xl space-y-8">
@@ -29,17 +37,21 @@ export default function SecurityAudit() {
               <span>Aktivitas Registrasi Akun</span>
             </h3>
             <div className="space-y-6">
-              {securityLogs.map((log, i) => (
+              {recentLogs.length === 0 ? (
+                <p className="text-sm text-slate-400 font-bold">Belum ada riwayat aktivitas.</p>
+              ) : recentLogs.map((log, i) => (
                 <div key={i} className="flex items-center justify-between group cursor-default">
                   <div className="flex items-center space-x-4">
-                    <div className="text-xs font-black text-slate-300 font-mono">{log.time}</div>
+                    <div className="text-xs font-black text-slate-300 font-mono">
+                      {log.createdAt?.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                    </div>
                     <div className="h-10 w-1 bg-slate-100 group-hover:bg-indigo-500 transition-colors rounded-full"></div>
                     <div>
-                      <p className="font-black text-slate-700 leading-none">{log.action}</p>
-                      <p className="text-xs text-slate-400 mt-1 font-medium">{log.detail}</p>
+                      <p className="font-black text-slate-700 leading-none">{log.title}</p>
+                      <p className="text-xs text-slate-400 mt-1 font-medium">{log.body}</p>
                     </div>
                   </div>
-                  {log.type === 'creation' && <UserPlus size={16} className="text-emerald-500" />}
+                  <UserPlus size={16} className="text-emerald-500" />
                 </div>
               ))}
             </div>
@@ -52,21 +64,21 @@ export default function SecurityAudit() {
             <div className="space-y-4">
               <div className="flex justify-between items-center border-b border-white/5 pb-2">
                 <span className="text-sm font-bold opacity-60">Total Guru</span>
-                <span className="font-black">15</span>
+                <span className="font-black">{totalGuru}</span>
               </div>
               <div className="flex justify-between items-center border-b border-white/5 pb-2">
                 <span className="text-sm font-bold opacity-60">Total Siswa</span>
-                <span className="font-black">480</span>
+                <span className="font-black">{totalSiswa}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold opacity-60">Total Ortu</span>
-                <span className="font-black">480</span>
+                <span className="font-black">{totalOrtu}</span>
               </div>
             </div>
             <div className="mt-8 pt-8 border-t border-white/5">
               <div className="flex items-center space-x-2 text-rose-400">
-                 <Fingerprint size={16} />
-                 <span className="text-[10px] font-black uppercase tracking-widest">Enkripsi SHA-256 Aktif</span>
+                <Fingerprint size={16} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Enkripsi SHA-256 Aktif</span>
               </div>
             </div>
           </div>
