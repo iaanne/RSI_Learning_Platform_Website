@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
       email: t.user.email,
       nip: t.nip,
       subjects: [...new Set(t.classSubjects.map((cs) => cs.subject.name))],
-      role: t.homeroomClass?.[0] ? `Wali ${t.homeroomClass[0].name}` : t.classSubjects.map(cs => cs.subject.name).join(", "),
+      role: t.homeroomClass?.length ? `Wali ${t.homeroomClass.map(c => c.name).join(", ")}` : t.classSubjects.map(cs => cs.subject.name).join(", "),
       status: t.user.isActive ? "Aktif" : "Nonaktif",
       totalSiswa,
       ketuntasan: avgKetuntasan,
