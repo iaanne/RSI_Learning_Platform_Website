@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
+import Swal from "sweetalert2";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -25,14 +26,35 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        alert(data.message || "Login gagal");
+        await Swal.fire({
+          icon: "error",
+          title: "Login Gagal",
+          text: data.message || "Periksa kembali email dan kata sandi Anda.",
+          confirmButtonText: "Coba Lagi",
+          confirmButtonColor: "#2563eb",
+        });
         setIsLoading(false);
         return;
       }
 
+      await Swal.fire({
+        icon: "success",
+        title: "Login Berhasil",
+        text: `Selamat datang, ${data.user?.name || "Pengguna"}!`,
+        confirmButtonText: "Masuk ke Dashboard",
+        confirmButtonColor: "#2563eb",
+        allowOutsideClick: false,
+      });
+
       router.push(data.redirectTo);
     } catch {
-      alert("Terjadi kesalahan. Silakan coba lagi.");
+      await Swal.fire({
+        icon: "error",
+        title: "Kesalahan",
+        text: "Terjadi kesalahan. Silakan coba lagi.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#2563eb",
+      });
       setIsLoading(false);
     }
   };
