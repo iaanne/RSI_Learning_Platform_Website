@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import './landing.css';
 
 export default function Home() {
   const [bubbleText, setBubbleText] = useState<string>(
@@ -74,8 +76,9 @@ export default function Home() {
 
   return (
     <>
+    <div className="landingPageWrapper">
       {/* NAV */}
-      <nav>
+      <nav className="landing-nav">
         <a href="#" className="nav-logo">
           <span className="logo-icon">🐼</span> SIPANDA
         </a>
@@ -491,6 +494,7 @@ export default function Home() {
           <p>© 2025 SIPANDA – Sistem Informasi Pembelajaran Adaptif. Dibuat dengan ❤️ untuk kemajuan pendidikan SD Indonesia.</p>
         </div>
       </footer>
-    </>
+    </div>
+    </> 
   );
 }

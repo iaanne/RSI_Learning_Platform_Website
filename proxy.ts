@@ -16,7 +16,7 @@ import type { Role } from "@/lib/auth";
 const PUBLIC_ROUTES = ["/","/auth/login", "/auth/forgot-password"];
 
 // Route API yang tidak perlu auth check
-const PUBLIC_API_ROUTES = ["/api/auth/login"];
+const PUBLIC_API_ROUTES = ["/","/api/auth/login"];
 
 // Dashboard yang diizinkan per role
 const ROLE_DASHBOARD_MAP: Record<Role, string> = {
@@ -38,7 +38,6 @@ const DASHBOARD_ROLE_GUARD: Record<string, Role[]> = {
 
 export default async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-
   // 1. Lewatkan aset statis & Next.js internals
   if (
     pathname.startsWith("/_next") ||
