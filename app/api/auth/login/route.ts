@@ -9,6 +9,7 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { signToken, setSessionCookie, type Role } from "@/lib/auth";
 import { loginSchema } from "@/lib/validations/auth";
+import { createAuditLog } from "@/lib/audit";
 
 export async function POST(req: NextRequest) {
   try {
@@ -142,10 +143,10 @@ async function logLoginAttempt(
     await db.auditLog.create({
       data: {
         userId,
-        actionType: success ? "LOGIN_OK" : "LOGIN_FAIL",
+        event: success ? "LOGIN_OK" : "LOGIN_FAIL",
         ipAddress: ip,
         userAgent,
-        metadata: { email },
+        detail: { email },
       },
     });
   } catch (err) {
