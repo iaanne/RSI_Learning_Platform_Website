@@ -252,7 +252,7 @@
   }
   .landingPageWrapper .panda-svg {
     width: 350px;
-    height: 400px;
+    height: 350px;
     animation: float 3s ease-in-out infinite;
   }
   @keyframes float {
