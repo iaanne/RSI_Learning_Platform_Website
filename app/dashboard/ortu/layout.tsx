@@ -1,11 +1,19 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, LineChart, Bell, UserCircle, LogOut } from "lucide-react";
 
 export default function OrtuLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [profile, setProfile] = useState<{ name: string; role: string; students?: { name: string; className: string | null; nis: string }[] } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/profile")
+      .then(r => r.json())
+      .then(data => { if (data.success) setProfile(data); })
+      .catch(() => {});
+  }, []);
   
   const menu = [
     { name: "Ringkasan Anak", icon: LayoutDashboard, href: "/dashboard/ortu" },
@@ -77,9 +85,9 @@ export default function OrtuLayout({ children }: { children: React.ReactNode }) 
           
           <div className="flex items-center space-x-4">
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-black text-[#2E7D32]">Bapak/Ibu Sukma</p>
+              <p className="text-sm font-black text-[#2E7D32]">{profile?.name ?? "Bapak/Ibu"}</p>
               <p className="text-[10px] text-[#00897B] bg-[#E0F2F1] px-2 py-0.5 rounded-full uppercase font-black tracking-wider mt-1 inline-block">
-                Wali Murid Kelas 4-A
+                {profile?.students?.[0]?.className ? `Wali Murid Kelas ${profile.students[0].className}` : "Wali Murid"}
               </p>
             </div>
             <div className="w-12 h-12 bg-[#FFFBF0] border-2 border-[#E8F5E9] rounded-[16px] shadow-sm flex items-center justify-center text-[#2E7D32]/60">

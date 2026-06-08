@@ -58,14 +58,19 @@ export async function GET(req: NextRequest) {
 
       const student = parent.students[0];
       return NextResponse.json({
-        studentId:   student.id,
-        name:        student.user.name,
-        totalPoints: student.totalPoints,
-        streak:      student.currentStreak,
-        progress:    student.progress.map((p) => ({
-          subject:           p.classSubject.subject.name,
-          completionPercent: p.completionPercent,
-          totalScore:        p.totalScore,
+        child: {
+          name:           student.user.name,
+          nis:            student.nis,
+          birthdate:      student.birthdate,
+          totalPoints:    student.totalPoints ?? 0,
+          currentStreak:  student.currentStreak ?? 0,
+          livesRemaining: student.livesRemaining ?? 3,
+        },
+        progress: student.progress.map((p) => ({
+          subjectName:       p.classSubject.subject.name,
+          subjectCode:       p.classSubject.subject.name,
+          totalScore:        p.totalScore ?? 0,
+          completionPercent: p.completionPercent ?? 0,
           adaptiveLevel:     p.adaptiveLevel,
           lastActivity:      p.lastActivity,
         })),
