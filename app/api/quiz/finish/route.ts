@@ -72,7 +72,53 @@ export async function POST(req: NextRequest) {
       data: { studentId: student.id, pointsEarned: scorePct, sourceType: "QUIZ", sourceId: sessionId, description: `Quiz selesai - Skor ${scorePct}%` },
     });
 
-    return NextResponse.json({ success: true, score: scorePct, correctCount: quizSession.correctCount, wrongCount: quizSession.wrongCount, totalAnswered, resultLevel, pointsEarned: scorePct });
+    // Ambil jawaban + soal untuk review
+    const answers = await db.quizAnswer.findMany({
+      where: { sessionId },
+      include: {
+        question: { select: { id: true, questionText: true, options: true, correctAnswer: true, difficulty: true } },
+      },
+    });
+
+    const review = answers.map((a) => {
+      const opts = Array.isArray(a.question.options)
+        ? Object.fromEntries((a.question.options as string[]).map((v, i) => [String.fromCharCode(65 + i), v]))
+        : (a.question.options as Record<string, string>) ?? {};
+
+      let correctKey = "";
+      if (Array.isArray(a.question.options)) {
+        const labels = ["A", "B", "C", "D"];
+        const idx = (a.question.options as string[]).findIndex(
+          (o) => String(o).trim() === String(a.question.correctAnswer).trim()
+        );
+        if (idx >= 0) correctKey = labels[idx];
+      } else if (a.question.options && typeof a.question.options === "object") {
+        const entry = Object.entries(opts).find(
+          ([, v]) => String(v).trim() === String(a.question.correctAnswer).trim()
+        );
+        if (entry) correctKey = entry[0];
+      }
+
+      return {
+        questionText: a.question.questionText,
+        options: opts,
+        userAnswer: a.answerGiven,
+        correctAnswer: correctKey,
+        correctValue: a.question.correctAnswer,
+        isCorrect: a.isCorrect,
+      };
+    });
+
+    return NextResponse.json({
+      success: true,
+      score: scorePct,
+      correctCount: quizSession.correctCount,
+      wrongCount: quizSession.wrongCount,
+      totalAnswered,
+      resultLevel,
+      pointsEarned: scorePct,
+      review,
+    });
   } catch (error) {
     console.error("[QUIZ_FINISH]", error);
     return NextResponse.json({ success: false, message: "Terjadi kesalahan server" }, { status: 500 });

@@ -24,11 +24,17 @@ export async function POST(req: NextRequest) {
     });
     if (!material) return NextResponse.json({ success: false, message: "Materi tidak ditemukan" }, { status: 404 });
 
-    // Get first question (MEDIUM)
-    const question = await db.question.findFirst({
+    // Get first question (MEDIUM fallback ke difficulty lain)
+    let question = await db.question.findFirst({
       where: { materialId, difficulty: "MEDIUM" },
       select: { id: true, questionText: true, options: true, difficulty: true, pointReward: true },
     });
+    if (!question) {
+      question = await db.question.findFirst({
+        where: { materialId },
+        select: { id: true, questionText: true, options: true, difficulty: true, pointReward: true },
+      });
+    }
     if (!question) {
       return NextResponse.json({ success: false, message: "Tidak ada soal tersedia" }, { status: 404 });
     }

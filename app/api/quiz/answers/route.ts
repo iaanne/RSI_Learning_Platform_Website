@@ -28,7 +28,18 @@ export async function POST(req: NextRequest) {
     const question = await db.question.findUnique({ where: { id: questionId } });
     if (!question) return NextResponse.json({ success: false, message: "Soal tidak ditemukan" }, { status: 404 });
 
-    const isCorrect = question.correctAnswer === answerGiven;
+    // Cari key (A/B/C/D) yang nilainya cocok dengan correctAnswer, lalu bandingkan dengan jawaban siswa
+    let correctKey = answerGiven;
+    if (Array.isArray(question.options)) {
+      const labels = ["A", "B", "C", "D"];
+      const idx = (question.options as string[]).findIndex((o) => String(o).trim() === String(question.correctAnswer).trim());
+      if (idx >= 0) correctKey = labels[idx];
+    } else if (question.options && typeof question.options === "object") {
+      const opts = question.options as Record<string, string>;
+      const entry = Object.entries(opts).find(([, v]) => String(v).trim() === String(question.correctAnswer).trim());
+      if (entry) correctKey = entry[0];
+    }
+    const isCorrect = correctKey === answerGiven;
 
     await db.quizAnswer.create({
       data: { sessionId, questionId, answerGiven, isCorrect },
@@ -81,7 +92,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       isCorrect,
-      correctAnswer: question.correctAnswer,
+      correctAnswer: correctKey,
       streak: newStreak,
       currentLevel: nextLevel,
       nextQuestion,

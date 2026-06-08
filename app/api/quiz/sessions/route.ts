@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
@@ -8,7 +8,6 @@ export async function GET(request: NextRequest) {
     const materialId = searchParams.get("materialId");
     const studentId = searchParams.get("studentId");
 
-    // Auth from cookie
     const authHeader = request.headers.get("cookie") || "";
     const tokenMatch = authHeader.match(/token=([^;]+)/);
     let userId: string | null = null;
@@ -16,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     if (tokenMatch) {
       try {
-        const payload = verifyToken(tokenMatch[1]);
+        const payload = await verifyToken(tokenMatch[1]);
         if (payload) {
           userId = payload.userId;
           userRole = payload.role;
@@ -28,24 +27,23 @@ export async function GET(request: NextRequest) {
 
     let targetStudentId = studentId;
 
-    // If student role, always use own id
     if (userRole === "STUDENT" || userRole === "student") {
-      const student = await prisma.students.findFirst({
-        where: { user_id: userId! },
+      const student = await db.student.findFirst({
+        where: { user: { id: userId! } },
       });
       targetStudentId = student?.id ?? null;
     }
 
     const where: Record<string, unknown> = {};
-    if (targetStudentId) where.student_id = targetStudentId;
-    if (materialId) where.material_id = materialId;
+    if (targetStudentId) where.studentId = targetStudentId;
+    if (materialId) where.materialId = materialId;
 
-    const sessions = await prisma.quiz_sessions.findMany({
+    const sessions = await db.quizSession.findMany({
       where,
-      orderBy: { started_at: "desc" },
+      orderBy: { startedAt: "desc" },
       take: 50,
       include: {
-        materials: {
+        material: {
           select: { title: true },
         },
       },
@@ -53,15 +51,15 @@ export async function GET(request: NextRequest) {
 
     const formatted = sessions.map((s) => ({
       id: s.id,
-      materialId: s.material_id,
-      materialTitle: s.materials?.title ?? "Unknown",
+      materialId: s.materialId,
+      materialTitle: s.material?.title ?? "Unknown",
       score: s.score ?? 0,
-      correctCount: s.correct_count ?? 0,
-      wrongCount: s.wrong_count ?? 0,
-      resultLevel: s.result_level ?? "MEDIUM",
-      streakCount: s.streak_count ?? 0,
-      startedAt: s.started_at,
-      finishedAt: s.finished_at,
+      correctCount: s.correctCount ?? 0,
+      wrongCount: s.wrongCount ?? 0,
+      resultLevel: s.resultLevel ?? "MEDIUM",
+      streakCount: s.streakCount ?? 0,
+      startedAt: s.startedAt,
+      finishedAt: s.finishedAt,
     }));
 
     return NextResponse.json({ sessions: formatted });
