@@ -124,8 +124,7 @@ export default function Home() {
               alt="Panda Study Mascot"
               className="panda-svg"
               width={350}
-              height={350}
-              priority
+              height={400}
             />
             <span className="stars-deco">⭐</span>
           </div>

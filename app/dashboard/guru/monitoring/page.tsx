@@ -1,13 +1,11 @@
-// app/dashboard/guru/page.tsx
 "use client";
-
 import React, { useState, useEffect } from "react";
 import {
   Search, Filter, MessageSquare, AlertCircle,
-  CheckCircle2, Users, TrendingUp, Eye
+  CheckCircle2, Users, TrendingUp, Eye, ChevronRight
 } from "lucide-react";
  
-// Tipe data internal untuk baris tabel di Frontend
+// Types
 type StudentRow = {
   id: string;
   name: string;
@@ -17,7 +15,7 @@ type StudentRow = {
   adaptiveLevel: string;
 };
  
-// Fungsi pembantu untuk menentukan kategori performa siswa
+// Helpers
 function getStatus(avg: number): StudentRow["status"] {
   if (avg >= 85) return "Sangat Baik";
   if (avg >= 75) return "Normal";
@@ -36,14 +34,15 @@ function barColor(avg: number) {
   return "bg-rose-500";
 }
  
-// DATA CADANGAN (DUMMY): Otomatis aktif jika database PostgreSQL kosong atau kamu belum login
+// Fallback dummy data (shown klo API blm adadata)
 const DUMMY: StudentRow[] = [
-  { id: "mock-1", name: "Talitha Sukma (Dummy)",  avg: 88, status: "Sangat Baik",    completionPercent: 90, adaptiveLevel: "ADVANCED"  },
-  { id: "mock-2", name: "Budi Santoso (Dummy)",   avg: 65, status: "Butuh Perhatian",  completionPercent: 45, adaptiveLevel: "REMEDIAL"  },
-  { id: "mock-3", name: "Citra Lestari (Dummy)",  avg: 95, status: "Sangat Baik",    completionPercent: 100, adaptiveLevel: "ADVANCED" },
-  { id: "mock-4", name: "Dimas Anggara (Dummy)",  avg: 72, status: "Normal",           completionPercent: 65, adaptiveLevel: "STANDARD"  },
+  { id: "1", name: "Talitha Sukma",  avg: 88, status: "Sangat Baik",      completionPercent: 90, adaptiveLevel: "ADVANCED"  },
+  { id: "2", name: "Budi Santoso",   avg: 65, status: "Butuh Perhatian",  completionPercent: 45, adaptiveLevel: "REMEDIAL"  },
+  { id: "3", name: "Citra Lestari",  avg: 95, status: "Sangat Baik",      completionPercent: 100, adaptiveLevel: "ADVANCED" },
+  { id: "4", name: "Dimas Anggara",  avg: 72, status: "Normal",           completionPercent: 65, adaptiveLevel: "STANDARD"  },
 ];
  
+// Component
 export default function MonitoringSiswa() {
   const [students, setStudents]   = useState<StudentRow[]>([]);
   const [loading, setLoading]     = useState(true);
@@ -51,46 +50,37 @@ export default function MonitoringSiswa() {
   const [filter, setFilter]       = useState<"Semua" | StudentRow["status"]>("Semua");
   const [showFilter, setShowFilter] = useState(false);
  
+  // Fetch dr real API, fallback ke dummy klo kosong/error
   useEffect(() => {
     async function load() {
       try {
-        // Menembak endpoint API buatanmu
         const res = await fetch("/api/students?includeProgress=true");
-        
-        // Jika belum login (401) atau server bermasalah, lempar ke blok 'catch' untuk memicu data DUMMY
-        if (!res.ok) throw new Error("Belum terautentikasi atau API error");
-        
+        if (!res.ok) throw new Error("API error");
         const data = await res.json();
  
-        // Memastikan data yang kembali berbentuk array dan tidak kosong
         if (Array.isArray(data) && data.length > 0) {
           const rows: StudentRow[] = data.map((s: any) => {
-            const progressList = s.progress || [];
-            
-            // Kalkulasi nilai rata-rata dari seluruh progress mata pelajaran siswa
-            const totalScore = progressList.reduce(
+            const totalScore = s.progress?.reduce(
               (sum: number, p: any) => sum + (p.totalScore ?? 0), 0
             ) ?? 0;
-            
-            const count = progressList.length > 0 ? progressList.length : 1;
-            const avg = Math.round(totalScore / count);
-            
+            const count = s.progress?.length || 1;
+            const avg   = Math.round(totalScore / count);
             return {
-              id:                s.id,
-              name:              s.user?.name ?? "Tanpa Nama", // Mengambil data dari relasi model User
-              avg:               avg,
-              status:            getStatus(avg),
-              completionPercent: progressList[0]?.completionPercent ?? 0,
-              adaptiveLevel:     progressList[0]?.adaptiveLevel ?? "STANDARD",
+              id:               s.id,
+              name:             s.user?.name ?? "—",
+              avg,
+              status:           getStatus(avg),
+              completionPercent: s.progress?.[0]?.completionPercent ?? 0,
+              adaptiveLevel:    s.progress?.[0]?.adaptiveLevel ?? "STANDARD",
             };
           });
           setStudents(rows);
         } else {
-          // Jika array kosong (artinya data guru/siswa di database belum diisi), pakai data DUMMY
+          // array kosong alih ke dummy
           setStudents(DUMMY);
         }
-      } catch (error) {
-        // Jika sistem login belum diaktifkan, otomatis dialihkan ke data DUMMY agar halaman tidak rusak
+      } catch {
+        // Network/API not ready alih ke dummy
         setStudents(DUMMY);
       } finally {
         setLoading(false);
@@ -99,7 +89,7 @@ export default function MonitoringSiswa() {
     load();
   }, []);
  
-  // Perhitungan Ringkasan Statistik
+  // Derived stats
   const total        = students.length;
   const needHelp     = students.filter(s => s.status === "Butuh Perhatian").length;
   const classAvg     = total
@@ -112,17 +102,18 @@ export default function MonitoringSiswa() {
     { label: "Butuh Perhatian",  value: String(needHelp), icon: AlertCircle, color: "text-rose-600",  bg: "bg-rose-100"   },
   ];
  
-  // Filter & Search Logic
+  // List (kena filter)
   const visible = students.filter(s => {
     const matchSearch = s.name.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === "Semua" || s.status === filter;
     return matchSearch && matchFilter;
   });
  
+  // Render 
   return (
     <div className="space-y-8">
  
-      {/* Grid Statistik Atas */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {stats.map((stat, i) => (
           <div
@@ -140,7 +131,7 @@ export default function MonitoringSiswa() {
         ))}
       </div>
  
-      {/* Bagian Judul dan Filter */}
+      {/* Header + Search */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <h1 className="text-2xl font-black text-slate-800 tracking-tight">Monitoring Siswa 📊</h1>
@@ -161,6 +152,7 @@ export default function MonitoringSiswa() {
             />
           </div>
  
+          {/* Filter dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowFilter(v => !v)}
@@ -186,7 +178,7 @@ export default function MonitoringSiswa() {
         </div>
       </div>
  
-      {/* Tabel Utama */}
+      {/* Table */}
       <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-48 text-slate-400 font-bold">
@@ -228,12 +220,14 @@ export default function MonitoringSiswa() {
                     {/* Status badge */}
                     <td className="px-8 py-5">
                       <span className={`inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight ${statusStyle(s.status)}`}>
-                        {s.status === "Butuh Perhatian" ? <AlertCircle size={12} /> : <CheckCircle2 size={12} />}
+                        {s.status === "Butuh Perhatian"
+                          ? <AlertCircle size={12} />
+                          : <CheckCircle2 size={12} />}
                         <span>{s.status}</span>
                       </span>
                     </td>
  
-                    {/* Avg Score Bar */}
+                    {/* Avg score */}
                     <td className="px-8 py-5">
                       <div className="flex flex-col">
                         <span className="font-black text-slate-800 text-lg">{s.avg}%</span>
@@ -246,14 +240,14 @@ export default function MonitoringSiswa() {
                       </div>
                     </td>
  
-                    {/* Completion Percent */}
+                    {/* Completion */}
                     <td className="px-8 py-5">
                       <span className="font-bold text-slate-600">
                         {Math.round(s.completionPercent)}%
                       </span>
                     </td>
  
-                    {/* Adaptive Level */}
+                    {/* Adaptive level */}
                     <td className="px-8 py-5">
                       <span className={`text-xs font-black px-3 py-1 rounded-lg ${
                         s.adaptiveLevel === "ADVANCED"  ? "bg-indigo-100 text-indigo-700" :
@@ -285,7 +279,7 @@ export default function MonitoringSiswa() {
         )}
       </div>
  
-      {/* Footer */}
+      {/* Footer count */}
       {!loading && (
         <p className="text-xs text-slate-400 font-medium text-right">
           Menampilkan {visible.length} dari {total} siswa
