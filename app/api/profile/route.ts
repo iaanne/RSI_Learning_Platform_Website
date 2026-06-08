@@ -34,6 +34,51 @@ export async function GET() {
       }
     }
 
+    if (session.role === "STUDENT") {
+      const student = await db.student.findFirst({
+        where: { userId: session.userId },
+        include: {
+          class: {
+            include: {
+              homeroomTeacher: { include: { user: { select: { id: true, name: true } } } },
+              classSubjects: {
+                where: { teacherId: { not: null } },
+                include: { subject: { select: { name: true } }, teacher: { include: { user: { select: { id: true, name: true } } } } },
+              },
+            },
+          },
+        },
+      });
+
+      if (student?.class) {
+        const teachers: { id: string; name: string; role: string; subject?: string }[] = [];
+
+        if (student.class.homeroomTeacher) {
+          teachers.push({
+            id: student.class.homeroomTeacher.user.id,
+            name: student.class.homeroomTeacher.user.name,
+            role: "Wali Kelas",
+          });
+        }
+
+        for (const cs of student.class.classSubjects) {
+          if (cs.teacher) {
+            const existing = teachers.find((t) => t.id === cs.teacher.user.id);
+            if (!existing) {
+              teachers.push({
+                id: cs.teacher.user.id,
+                name: cs.teacher.user.name,
+                role: "Guru Mapel",
+                subject: cs.subject.name,
+              });
+            }
+          }
+        }
+
+        profile.teachers = teachers;
+      }
+    }
+
     return NextResponse.json({ success: true, ...profile });
   } catch (error) {
     console.error("[PROFILE_GET]", error);
