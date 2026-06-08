@@ -45,7 +45,7 @@ export async function GET(
       totalQuiz > 0
         ? Math.round(
             student.quizSessions.reduce(
-              (acc, q) => acc + (q.score ?? 0),
+              (acc: number, q: { score?: number | null }) => acc + (q.score ?? 0),
               0
             ) / totalQuiz
           )
