@@ -59,18 +59,20 @@ export default function KepsekDashboard() {
     load();
   }, []);
 
+  // Penyesuaian stats warna agar konsisten dengan tema Green, Teal, Orange, Red
   const stats = [
-    { label: "Total Siswa",      value: loading ? "..." : String(data.totalStudents),  icon: Users,        color: "text-emerald-600",   bg: "bg-emerald-50"   },
-    { label: "Rata-rata Nilai",  value: loading ? "..." : `${data.schoolAvgScore}%`,   icon: BookCheck,    color: "text-teal-600",      bg: "bg-teal-50"   },
-    { label: "Guru Aktif",       value: loading ? "..." : String(data.totalTeachers),  icon: TrendingUp,   color: "text-cyan-600",      bg: "bg-cyan-50" },
-    { label: "Siswa Tertinggal", value: loading ? "..." : "0",                         icon: AlertCircle,  color: "text-amber-600",     bg: "bg-amber-50" },
+    { label: "Total Siswa",      value: loading ? "..." : String(data.totalStudents),  icon: Users,        color: "text-[#2E7D32]",   bg: "bg-[#E8F5E9]"   }, // Green
+    { label: "Rata-rata Nilai",  value: loading ? "..." : `${data.schoolAvgScore}%`,   icon: BookCheck,    color: "text-[#00897B]",   bg: "bg-[#E0F2F1]"   }, // Teal
+    { label: "Guru Aktif",       value: loading ? "..." : String(data.totalTeachers),  icon: TrendingUp,   color: "text-[#1976D2]",   bg: "bg-[#E3F2FD]"   }, // Blue
+    { label: "Siswa Tertinggal", value: loading ? "..." : "0",                         icon: AlertCircle,  color: "text-[#E53935]",   bg: "bg-[#FFEBEE]"   }, // Red
   ];
 
+  // Penyesuaian warna progress bar kelas mengikuti tingkat capaian
   function barColor(pct: number) {
-    if (pct >= 85) return "bg-emerald-500";
-    if (pct >= 75) return "bg-teal-400";
-    if (pct >= 60) return "bg-amber-400";
-    return "bg-rose-400";
+    if (pct >= 85) return "bg-[#4CAF50]";   // Green
+    if (pct >= 75) return "bg-[#00897B]";   // Teal
+    if (pct >= 60) return "bg-[#FF8F00]";   // Orange
+    return "bg-[#E53935]";                 // Red
   }
 
   const displayClasses: ClassRank[] = classes.length > 0 ? classes : [
@@ -82,101 +84,102 @@ export default function KepsekDashboard() {
 
   return (
     <div className="space-y-10">
-      <header className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-emerald-100 pb-6">
+      {/* Header Utama */}
+      <header className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-[#E8F5E9] pb-6">
         <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight">Laporan Eksekutif Sekolah</h1>
-          <p className="text-slate-500 font-medium mt-1">Ringkasan performa akademik tahun ajaran 2026/2027.</p>
+          <h1 className="text-3xl font-black text-[#2E7D32] tracking-tight">Laporan Eksekutif Sekolah</h1>
+          <p className="text-[#2E7D32]/60 font-medium mt-1">Ringkasan performa akademik tahun ajaran 2026/2027.</p>
         </div>
-        <div className="mt-4 md:mt-0 px-4 py-2 bg-emerald-100 text-emerald-800 rounded-full font-bold text-xs tracking-wide self-start">
+        <div className="mt-4 md:mt-0 px-4 py-2 bg-[#E8F5E9] text-[#2E7D32] rounded-full font-black text-xs tracking-wide self-start shadow-sm">
           🟢 SISTEM AKTIF
         </div>
       </header>
 
-      {/* Stats Cards */}
+      {/* Stats Cards dengan radius 24px dan bayangan kustom */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {stats.map((s, i) => (
-          <div key={i} className="bg-white p-6 rounded-[24px] border border-emerald-50/60 shadow-sm hover:shadow-md transition-shadow">
-            <div className={`${s.bg} ${s.color} w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-inner`}>
+          <div key={i} className="bg-white p-6 rounded-[24px] border border-[#E8F5E9] shadow-[0_8px_32px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.1)] transition-all">
+            <div className={`${s.bg} ${s.color} w-12 h-12 rounded-[16px] flex items-center justify-center mb-4`}>
               <s.icon size={22} />
             </div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{s.label}</p>
-            <p className="text-3xl font-black text-slate-800 mt-1">{s.value}</p>
+            <p className="text-xs font-black text-[#2E7D32]/40 uppercase tracking-widest">{s.label}</p>
+            <p className="text-3xl font-black text-[#2E7D32] mt-1">{s.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Class Ranking */}
-      <div className="bg-white p-8 rounded-[32px] border border-emerald-50/60 shadow-sm">
+      {/* Peringkat Kelas dengan radius 24px */}
+      <div className="bg-white p-8 rounded-[24px] border border-[#E8F5E9] shadow-[0_8px_32px_rgba(0,0,0,0.08)]">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h3 className="text-lg font-bold text-slate-800">Peringkat Ketuntasan Per Kelas</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Berdasarkan akumulasi nilai pengerjaan modul siswa.</p>
+            <h3 className="text-lg font-black text-[#2E7D32]">Peringkat Ketuntasan Per Kelas</h3>
+            <p className="text-xs text-[#2E7D32]/50 mt-0.5 font-medium">Berdasarkan akumulasi nilai pengerjaan modul siswa.</p>
           </div>
           {classes.length === 0 && !loading && (
-            <span className="text-xs px-3 py-1 bg-slate-100 text-slate-500 font-bold rounded-full">Demo Data</span>
+            <span className="text-xs px-3 py-1 bg-[#FFFBF0] text-[#FF8F00] border border-[#FFF8E1] font-black rounded-full">Demo Data</span>
           )}
         </div>
         {loading ? (
-          <p className="text-slate-400 text-sm">Memuat data kelas...</p>
+          <p className="text-[#2E7D32]/50 text-sm font-medium">Memuat data kelas...</p>
         ) : (
           <div className="space-y-6">
             {displayClasses.map((item, i) => (
               <div key={i} className="flex items-center space-x-6">
-                <span className="w-24 text-sm font-bold text-slate-600 shrink-0">{item.name}</span>
-                <div className="flex-1 bg-slate-100 h-4 rounded-full overflow-hidden p-[2px]">
+                <span className="w-24 text-sm font-black text-[#2E7D32]/80 shrink-0">{item.name}</span>
+                <div className="flex-1 bg-[#FFFBF0] border border-[#E8F5E9] h-5 rounded-full overflow-hidden p-[2px]">
                   <div
                     className={`${barColor(item.pct)} h-full rounded-full transition-all duration-700`}
                     style={{ width: `${item.pct}%` }}
                   />
                 </div>
-                <span className="w-12 text-sm font-black text-slate-800 text-right">{item.pct}%</span>
+                <span className="w-12 text-sm font-black text-[#2E7D32] text-right">{item.pct}%</span>
               </div>
             ))}
           </div>
         )}
       </div>
 
-{/* Landing Page Style Bottom Panels */}
-<div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch"> {/* Tambah items-stretch agar tinggi card kanan-kiri selalu sama seimbang */}
-  
-  {/* Card Kiri: Manajemen Pengguna */}
-  <div className="bg-gradient-to-br from-emerald-800 to-teal-950 rounded-[32px] p-8 text-white shadow-xl shadow-emerald-900/10 relative overflow-hidden flex flex-col justify-between min-h-[220px]">
-    <div className="absolute right-0 bottom-0 opacity-10 text-9xl pointer-events-none transform translate-x-10 translate-y-10 select-none">
-      🍃
-    </div>
-    <div className="z-10">
-      <h3 className="font-bold text-xl mb-3">Manajemen Pengguna</h3>
-      <p className="text-emerald-200/90 text-sm mb-6 leading-relaxed max-w-md">
-        Sebagai Kepala Sekolah, Anda memegang kendali penuh validasi berkas, penugasan kelas, serta hak akses login Guru dan Siswa.
-      </p>
-    </div>
-    <div className="z-10 mt-auto"> {/* mt-auto memaksa tombol selalu berada di paling bawah card secara rapi */}
-      <Link href="/dashboard/kepsek/guru">
-        <button className="bg-white text-emerald-950 px-6 py-3 rounded-xl font-bold text-sm hover:bg-emerald-50 transition-colors shadow-md inline-block">
-          Kelola Akun Guru
-        </button>
-      </Link>
-    </div>
-  </div>
+      {/* Bottom Panels Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+        
+        {/* Card Kiri: Manajemen Pengguna (Aksen Gelap Hijau-Teal) */}
+        <div className="bg-gradient-to-br from-[#2E7D32] to-[#004D40] rounded-[24px] p-8 text-white shadow-[0_8px_32px_rgba(46,125,50,0.15)] relative overflow-hidden flex flex-col justify-between min-h-[220px]">
+          <div className="absolute right-0 bottom-0 opacity-10 text-9xl pointer-events-none transform translate-x-10 translate-y-10 select-none">
+            🍃
+          </div>
+          <div className="z-10">
+            <h3 className="font-black text-xl mb-3">Manajemen Pengguna</h3>
+            <p className="text-[#E8F5E9]/90 text-sm mb-6 leading-relaxed max-w-md font-medium">
+              Sebagai Kepala Sekolah, Anda memegang kendali penuh validasi berkas, penugasan kelas, serta hak akses login Guru dan Siswa.
+            </p>
+          </div>
+          <div className="z-10 mt-auto">
+            <Link href="/dashboard/kepsek/guru">
+              <button className="bg-white text-[#004D40] px-6 py-3 rounded-[16px] font-black text-sm hover:bg-[#FFFDE7] transition-colors shadow-md inline-block">
+                Kelola Akun Guru
+              </button>
+            </Link>
+          </div>
+        </div>
 
-  {/* Card Kanan: Log Keamanan Sistem */}
-  <div className="bg-white rounded-[32px] p-8 border border-emerald-50/60 shadow-sm flex flex-col justify-between min-h-[220px]">
-    <div>
-      <h3 className="font-bold text-slate-800 text-xl mb-3">Log Keamanan Sistem</h3>
-      <p className="text-sm text-slate-500 leading-relaxed max-w-md">
-        Pantau seluruh aktivitas mutasi data database, riwayat login, serta eksekusi sistem demi menjaga integritas data akademik SDN 01 Solo.
-      </p>
-    </div>
-    <div className="mt-auto">
-      <Link href="/dashboard/kepsek/audit">
-        <button className="px-5 py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors flex items-center gap-2 inline-flex">
-          Buka Audit Log <span className="text-emerald-400">→</span>
-        </button>
-      </Link>
-    </div>
-  </div>
+        {/* Card Kanan: Log Keamanan Sistem */}
+        <div className="bg-white rounded-[24px] p-8 border border-[#E8F5E9] shadow-[0_8px_32px_rgba(0,0,0,0.08)] flex flex-col justify-between min-h-[220px]">
+          <div>
+            <h3 className="font-black text-[#2E7D32] text-xl mb-3">Log Keamanan Sistem</h3>
+            <p className="text-sm text-[#2E7D32]/60 leading-relaxed max-w-md font-medium">
+              Pantau seluruh aktivitas mutasi data database, riwayat login, serta eksekusi sistem demi menjaga integritas data akademik SDN 01 Solo.
+            </p>
+          </div>
+          <div className="mt-auto">
+            <Link href="/dashboard/kepsek/audit">
+              <button className="px-5 py-3 bg-[#2E7D32] text-white rounded-[16px] text-sm font-black hover:bg-[#004D40] transition-colors flex items-center gap-2 inline-flex shadow-sm">
+                Buka Audit Log <span className="text-[#FFFDE7]">→</span>
+              </button>
+            </Link>
+          </div>
+        </div>
 
-</div>
+      </div>
     </div>
   );
 }

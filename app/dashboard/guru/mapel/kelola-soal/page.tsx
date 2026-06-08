@@ -13,13 +13,19 @@ type Question = {
 };
 
 const LEVEL_LABEL: Record<string, string> = { EASY: "Mudah", MEDIUM: "Sedang", HARD: "Sulit" };
+
+// Mengubah warna label tingkat kesulitan sesuai palet baru
 const LEVEL_COLOR: Record<string, string> = {
-  EASY:   "bg-green-100 text-green-700",
-  MEDIUM: "bg-amber-100 text-amber-700",
-  HARD:   "bg-rose-100  text-rose-700",
+  EASY:   "bg-[#E8F5E9] text-[#2E7D32]",  // Green Light & Dark
+  MEDIUM: "bg-[#FFF8E1] text-[#FF8F00]",  // Orange Light & Dark
+  HARD:   "bg-[#FFEBEE] text-[#E53935]",  // Red Light & Dark
 };
+
+// Mengubah warna indikator bar samping / progress
 const LEVEL_BAR: Record<string, string> = {
-  EASY: "bg-green-500", MEDIUM: "bg-amber-500", HARD: "bg-rose-500",
+  EASY: "bg-[#4CAF50]",   // Green
+  MEDIUM: "bg-[#FF8F00]", // Orange
+  HARD: "bg-[#E53935]",   // Red
 };
 
 export default function KelolaSoal() {
@@ -70,7 +76,7 @@ export default function KelolaSoal() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          materialId,        // add this line
+          materialId,
           questionText:  qText.trim(),
           options:       opts,
           correctAnswer: opts[["A","B","C","D"].indexOf(correct)],
@@ -103,41 +109,47 @@ export default function KelolaSoal() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-20">
-      <Link href="/dashboard/guru/mapel" className="flex items-center text-slate-500 font-bold text-sm hover:text-blue-600 w-fit">
+      {/* Mengubah warna link kembali ke hijau tua */}
+      <Link href="/dashboard/guru/mapel" className="flex items-center text-[#2E7D32]/70 font-bold text-sm hover:text-[#2E7D32] w-fit transition-colors">
         <ChevronLeft size={18} /> Kembali
       </Link>
 
-      <div className="flex justify-between items-center bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm">
+      <div className="flex justify-between items-center bg-white p-6 rounded-[24px] border border-[#E8F5E9] shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
         <div>
-          <h1 className="text-2xl font-black text-slate-800">Bank Soal Adaptif 🧠</h1>
-          <p className="text-slate-500 text-sm font-medium">
+          <h1 className="text-2xl font-black text-[#2E7D32]">Bank Soal Adaptif 🧠</h1>
+          <p className="text-[#2E7D32]/60 text-sm font-medium">
             {materialId ? `Material ID: ${materialId.slice(0,8)}...` : "Pilih materi dari halaman Mapel"}
           </p>
         </div>
+        {/* Tombol Buat Soal Baru menggunakan --green (#4CAF50) atau --red ketika batal */}
         <button
           onClick={() => setShowForm(v => !v)}
-          className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black flex items-center space-x-2 shadow-lg shadow-indigo-100 hover:scale-105 transition-all"
+          className={`text-white px-6 py-3 rounded-[24px] font-black flex items-center space-x-2 shadow-md transition-all ${
+            showForm 
+              ? "bg-[#E53935] hover:bg-[#C62828]" 
+              : "bg-[#4CAF50] hover:bg-[#2E7D32] shadow-[0_8px_32px_rgba(76,175,80,0.15)]"
+          }`}
         >
           {showForm ? <X size={18} /> : <Plus size={18} />}
           <span>{showForm ? "Batal" : "Buat Soal Baru"}</span>
         </button>
       </div>
 
-      {/* Adaptive stats bar */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-8 rounded-[32px] text-white flex items-center justify-between shadow-xl shadow-indigo-100">
+      {/* Adaptive stats bar - Diubah dari gradient indigo ke gradient kombinasi Green & Teal */}
+      <div className="bg-gradient-to-r from-[#2E7D32] to-[#00897B] p-8 rounded-[24px] text-white flex items-center justify-between shadow-[0_8px_32px_rgba(46,125,50,0.2)]">
         <div className="space-y-1">
           <h4 className="text-lg font-black flex items-center space-x-2">
             <Brain size={24} /><span>Mode Adaptif Aktif</span>
           </h4>
-          <p className="text-indigo-100 text-sm opacity-80 max-w-md">
+          <p className="text-[#E8F5E9] text-sm opacity-90 max-w-md">
             Mudah → Sedang → Sulit (maks: 10/25/15 soal)
           </p>
         </div>
-        <div className="hidden md:flex space-x-4">
+        <div className="hidden md:flex space-x-8">
           {(["EASY","MEDIUM","HARD"] as const).map(lv => (
             <div key={lv} className="text-center">
-              <p className="text-2xl font-black">{counts[lv]}<span className="text-sm opacity-50">/{CAPS[lv]}</span></p>
-              <p className="text-[10px] uppercase font-bold opacity-60">{LEVEL_LABEL[lv]}</p>
+              <p className="text-2xl font-black">{counts[lv]}<span className="text-sm opacity-60">/{CAPS[lv]}</span></p>
+              <p className="text-[10px] uppercase tracking-wider font-black opacity-75">{LEVEL_LABEL[lv]}</p>
             </div>
           ))}
         </div>
@@ -145,30 +157,31 @@ export default function KelolaSoal() {
 
       {/* New question form */}
       {showForm && (
-        <div className="bg-white p-8 rounded-[32px] border-2 border-indigo-200 shadow-sm space-y-6">
-          <h3 className="font-black text-slate-800 text-lg">Buat Soal Baru</h3>
+        <div className="bg-white p-8 rounded-[24px] border-2 border-[#E8F5E9] shadow-[0_8px_32px_rgba(0,0,0,0.1)] space-y-6">
+          <h3 className="font-black text-[#2E7D32] text-lg">Buat Soal Baru</h3>
 
           <div>
-            <label className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-2">Teks Pertanyaan *</label>
+            <label className="text-xs font-black text-[#2E7D32]/50 uppercase tracking-widest block mb-2">Teks Pertanyaan *</label>
             <textarea
               value={qText} onChange={e => setQText(e.target.value)}
               rows={3} placeholder="Tulis pertanyaan di sini..."
-              className="w-full p-4 bg-slate-50 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-medium text-slate-700 border-2 border-slate-100"
+              className="w-full p-4 bg-[#FFFBF0] rounded-[24px] outline-none focus:ring-2 focus:ring-[#4CAF50] font-medium text-[#2E7D32] border border-[#E8F5E9]"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {["A","B","C","D"].map((ltr, i) => (
               <div key={ltr} className="flex items-center space-x-3">
+                {/* Badge huruf pilihan jawaban */}
                 <span className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs flex-shrink-0 ${
-                  correct === ltr ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500"
+                  correct === ltr ? "bg-[#4CAF50] text-white" : "bg-[#E8F5E9] text-[#2E7D32]/70"
                 }`}>{ltr}</span>
                 <input
                   type="text" value={opts[i]} onChange={e => setOpts(o => o.map((v,j) => j===i ? e.target.value : v))}
                   placeholder={`Pilihan ${ltr}`}
-                  className="flex-1 p-3 bg-slate-50 rounded-xl outline-none focus:ring-2 focus:ring-indigo-400 font-medium text-slate-700 border border-slate-100"
+                  className="flex-1 p-3 bg-[#FFFBF0] rounded-[24px] outline-none focus:ring-2 focus:ring-[#4CAF50]/50 font-medium text-[#2E7D32] border border-[#E8F5E9]"
                 />
-                <button onClick={() => setCorrect(ltr)} className={`text-xs font-black px-2 py-1 rounded-lg ${correct === ltr ? "text-emerald-600" : "text-slate-300 hover:text-slate-500"}`}>
+                <button onClick={() => setCorrect(ltr)} className={`text-sm font-black px-2 py-1 rounded-lg transition-colors ${correct === ltr ? "text-[#2E7D32]" : "text-[#2E7D32]/30 hover:text-[#2E7D32]"}`}>
                   ✓
                 </button>
               </div>
@@ -176,19 +189,19 @@ export default function KelolaSoal() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Tingkat Kesulitan:</label>
+            <label className="text-xs font-black text-[#2E7D32]/50 uppercase tracking-widest">Tingkat Kesulitan:</label>
             {(["EASY","MEDIUM","HARD"] as const).map(lv => (
               <button key={lv} onClick={() => setDiff(lv)}
-                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${diff === lv ? LEVEL_COLOR[lv] : "bg-slate-100 text-slate-400"}`}>
+                className={`px-4 py-2 rounded-[24px] text-xs font-black transition-all ${diff === lv ? LEVEL_COLOR[lv] : "bg-[#E8F5E9]/50 text-[#2E7D32]/40"}`}>
                 {LEVEL_LABEL[lv]}
               </button>
             ))}
           </div>
 
-          {error && <p className="text-rose-600 font-bold text-sm">{error}</p>}
+          {error && <p className="text-[#E53935] font-bold text-sm">{error}</p>}
 
           <button onClick={handleSave} disabled={saving}
-            className="flex items-center space-x-2 bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black disabled:opacity-60 hover:bg-indigo-700 transition-all">
+            className="flex items-center space-x-2 bg-[#4CAF50] hover:bg-[#2E7D32] text-white px-8 py-3 rounded-[24px] font-black disabled:opacity-60 transition-all shadow-md">
             <Save size={18} />
             <span>{saving ? "Menyimpan..." : "Simpan Soal"}</span>
           </button>
@@ -197,32 +210,34 @@ export default function KelolaSoal() {
 
       {/* Question list */}
       {loading ? (
-        <p className="text-slate-400 text-center py-12">Memuat soal...</p>
+        <p className="text-[#2E7D32]/50 text-center py-12 font-medium">Memuat soal...</p>
       ) : questions.length === 0 ? (
-        <p className="text-slate-400 text-center py-12">Belum ada soal. Klik "Buat Soal Baru" untuk mulai.</p>
+        <p className="text-[#2E7D32]/50 text-center py-12 font-medium">Belum ada soal. Klik "Buat Soal Baru" untuk mulai.</p>
       ) : (
         <div className="space-y-4">
           {questions.map(q => (
-            <div key={q.id} className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm hover:border-indigo-300 transition-all relative overflow-hidden">
-              <div className={`absolute left-0 top-0 bottom-0 w-2 ${LEVEL_BAR[q.difficulty] ?? "bg-slate-300"}`} />
+            <div key={q.id} className="bg-white p-8 rounded-[24px] border border-[#E8F5E9] shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:border-[#4CAF50] transition-all relative overflow-hidden">
+              <div className={`absolute left-0 top-0 bottom-0 w-2 ${LEVEL_BAR[q.difficulty] ?? "bg-[#E8F5E9]"}`} />
               <div className="flex flex-col md:flex-row justify-between gap-6">
                 <div className="space-y-3 flex-1">
                   <span className={`px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${LEVEL_COLOR[q.difficulty] ?? ""}`}>
                     Level {LEVEL_LABEL[q.difficulty] ?? q.difficulty}
                   </span>
-                  <h4 className="text-xl font-bold text-slate-800 leading-tight">
-                    <span className="text-slate-300 mr-2">Q:</span>{q.questionText}
+                  <h4 className="text-xl font-bold text-[#2E7D32] leading-tight">
+                    <span className="text-[#2E7D32]/30 mr-2">Q:</span>{q.questionText}
                   </h4>
-                  <div className="flex items-center space-x-2 text-sm text-green-600 font-bold bg-green-50 w-fit px-3 py-1 rounded-lg">
+                  {/* Status Jawaban menggunakan basis warna Teal lembut */}
+                  <div className="flex items-center space-x-2 text-sm text-[#00897B] font-bold bg-[#E0F2F1] w-fit px-3 py-1 rounded-lg">
                     <CheckCircle size={14} />
                     <span>Jawaban: {q.correctAnswer}</span>
                   </div>
                 </div>
                 <div className="flex md:flex-col space-x-2 md:space-x-0 md:space-y-2 justify-end">
-                  <button className="p-4 bg-slate-50 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 rounded-2xl transition-all">
+                  {/* Tombol Aksi menggunakan Orange Lembut untuk Edit, dan Red Lembut untuk Delete */}
+                  <button className="p-4 bg-[#FFF8E1] text-[#FF8F00] hover:bg-[#FF8F00] hover:text-white rounded-[16px] transition-all">
                     <Edit3 size={20} />
                   </button>
-                  <button onClick={() => handleDelete(q.id)} className="p-4 bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 rounded-2xl transition-all">
+                  <button onClick={() => handleDelete(q.id)} className="p-4 bg-[#FFEBEE] text-[#E53935] hover:bg-[#E53935] hover:text-white rounded-[16px] transition-all">
                     <Trash2 size={20} />
                   </button>
                 </div>

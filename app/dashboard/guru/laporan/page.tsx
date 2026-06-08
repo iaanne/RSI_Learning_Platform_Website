@@ -49,14 +49,16 @@ export default function LaporanMingguan() {
 
   return (
     <div className="max-w-4xl space-y-6">
-      <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+      {/* Container utama diubah border border-[#E8F5E9] dan radius 24px */}
+      <div className="bg-white p-8 rounded-[24px] border border-[#E8F5E9] shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
         <div className="flex items-center space-x-4 mb-6">
-          <div className="p-3 bg-green-100 text-green-600 rounded-2xl">
+          {/* Badge icon disesuaikan ke warna Hijau Daun kustom */}
+          <div className="p-3 bg-[#E8F5E9] text-[#2E7D32] rounded-[16px]">
             <FileCheck size={28} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Review Laporan Mingguan</h2>
-            <p className="text-slate-500 text-sm">
+            <h2 className="text-xl font-black text-[#2E7D32]">Review Laporan Mingguan</h2>
+            <p className="text-[#2E7D32]/60 text-sm font-medium">
               {new Date().toLocaleDateString("id-ID", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
             </p>
           </div>
@@ -64,34 +66,36 @@ export default function LaporanMingguan() {
 
         {sent ? (
           <div className="flex flex-col items-center py-12 space-y-4">
-            <CheckCircle2 size={48} className="text-emerald-500" />
-            <p className="text-xl font-black text-slate-800">Laporan Berhasil Dikirim!</p>
-            <p className="text-slate-500 text-sm">Semua orang tua telah menerima laporan mingguan.</p>
+            <CheckCircle2 size={48} className="text-[#4CAF50]" />
+            <p className="text-xl font-black text-[#2E7D32]">Laporan Berhasil Dikirim!</p>
+            <p className="text-[#2E7D32]/70 text-sm font-medium">Semua orang tua telah menerima laporan mingguan.</p>
             <button
               onClick={() => { setSent(false); setCatatan(""); }}
-              className="mt-4 px-6 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold text-sm"
+              className="mt-4 px-6 py-3 bg-[#E8F5E9] text-[#2E7D32] rounded-[24px] font-black text-sm hover:bg-[#FFFDE7] transition-colors"
             >
               Kirim Lagi
             </button>
           </div>
         ) : (
-          <div className="space-y-4 border-t border-slate-50 pt-6">
-            <div className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center">
+          <div className="space-y-4 border-t border-[#E8F5E9]/50 pt-6">
+            {/* Status Data Siswa menggunakan background warna cream kekuningan lembut */}
+            <div className="p-4 bg-[#FFFBF0] border border-[#E8F5E9] rounded-[24px] flex justify-between items-center">
               <div>
-                <p className="font-bold text-slate-800">Status Data Siswa</p>
-                <p className="text-xs text-slate-500">Data progress siswa akan diambil otomatis.</p>
+                <p className="font-bold text-[#2E7D32]">Status Data Siswa</p>
+                <p className="text-xs text-[#2E7D32]/60 font-medium">Data progress siswa akan diambil otomatis.</p>
               </div>
-              <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase">
+              <span className="bg-[#E8F5E9] text-[#2E7D32] text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider">
                 Siap Kirim
               </span>
             </div>
 
-            <div className="p-4 border border-slate-100 rounded-2xl">
-              <label className="block text-sm font-bold text-slate-700 mb-2">
+            {/* Input area Catatan Umum */}
+            <div className="p-4 border border-[#E8F5E9] rounded-[24px]">
+              <label className="block text-xs font-black text-[#2E7D32]/50 uppercase tracking-widest mb-2">
                 Catatan Umum Kelas (Opsional)
               </label>
               <textarea
-                className="w-full p-4 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full p-4 bg-[#FFFBF0] border border-[#E8F5E9] rounded-[16px] text-sm text-[#2E7D32] placeholder-[#2E7D32]/30 outline-none focus:ring-2 focus:ring-[#4CAF50]/50 font-medium"
                 placeholder="Contoh: Seluruh siswa menunjukkan kemajuan pesat pada materi pecahan..."
                 rows={3}
                 value={catatan}
@@ -99,20 +103,23 @@ export default function LaporanMingguan() {
               />
             </div>
 
+            {/* Error handling menggunakan warna Red cerah */}
             {error && (
-              <p className="text-sm text-rose-600 font-bold px-2">{error}</p>
+              <p className="text-sm text-[#E53935] font-bold px-2">{error}</p>
             )}
 
             <div className="mt-8 flex space-x-4">
+              {/* Tombol kirim utama diubah menjadi Hijau --green (#4CAF50) */}
               <button
                 onClick={handleSend}
                 disabled={sending}
-                className="flex-1 bg-blue-600 disabled:opacity-60 text-white py-4 rounded-2xl font-bold flex items-center justify-center space-x-2 shadow-lg shadow-blue-200"
+                className="flex-1 bg-[#4CAF50] hover:bg-[#2E7D32] disabled:opacity-60 text-white py-4 rounded-[24px] font-black flex items-center justify-center space-x-2 shadow-[0_8px_32px_rgba(76,175,80,0.15)] transition-all"
               >
                 <Send size={18} />
                 <span>{sending ? "Mengirim..." : "Kirim Laporan ke Semua Ortu"}</span>
               </button>
-              <button className="px-6 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold">
+              {/* Tombol download sekunder menggunakan background Hijau muda */}
+              <button className="px-6 py-4 bg-[#E8F5E9] text-[#2E7D32] hover:bg-[#FFFDE7] rounded-[24px] font-black transition-colors">
                 <Download size={18} />
               </button>
             </div>
