@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import './landing.css';
 
 export default function Home() {
@@ -118,53 +119,13 @@ export default function Home() {
             />
             
             {/* Panda SVG Mascot */}
-            <svg className="panda-svg" viewBox="0 0 220 260" xmlns="http://www.w3.org/2000/svg">
-              {/* Body */}
-              <ellipse cx="110" cy="185" rx="65" ry="70" fill="#fff" stroke="#333" strokeWidth="3" />
-              {/* Belly */}
-              <ellipse cx="110" cy="195" rx="38" ry="45" fill="#f0f0f0" />
-              {/* Ears */}
-              <circle cx="60" cy="60" r="28" fill="#333" />
-              <circle cx="60" cy="60" r="16" fill="#555" />
-              <circle cx="160" cy="60" r="28" fill="#333" />
-              <circle cx="160" cy="60" r="16" fill="#555" />
-              {/* Head */}
-              <circle cx="110" cy="100" r="68" fill="#fff" stroke="#333" strokeWidth="3" />
-              {/* Eye patches */}
-              <ellipse cx="84" cy="92" rx="20" ry="18" fill="#333" />
-              <ellipse cx="136" cy="92" rx="20" ry="18" fill="#333" />
-              {/* Eyes */}
-              <circle cx="84" cy="93" r="10" fill="#fff" />
-              <circle cx="136" cy="93" r="10" fill="#fff" />
-              <circle cx="86" cy="91" r="5" fill="#1a1a1a" />
-              <circle cx="138" cy="91" r="5" fill="#1a1a1a" />
-              {/* Eye shine */}
-              <circle cx="88" cy="89" r="2" fill="#fff" />
-              <circle cx="140" cy="89" r="2" fill="#fff" />
-              {/* Nose */}
-              <ellipse cx="110" cy="113" rx="12" ry="8" fill="#555" />
-              {/* Mouth */}
-              <path d="M 100 122 Q 110 132 120 122" stroke="#555" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-              {/* Cheeks */}
-              <circle cx="70" cy="115" r="12" fill="#FFCDD2" opacity="0.7" />
-              <circle cx="150" cy="115" r="12" fill="#FFCDD2" opacity="0.7" />
-              {/* Grad cap */}
-              <rect x="72" y="42" width="76" height="10" rx="3" fill="#2E7D32" />
-              <polygon points="110,22 150,42 70,42" fill="#2E7D32" />
-              <rect x="150" y="42" width="4" height="18" fill="#2E7D32" />
-              <circle cx="152" cy="62" r="5" fill="#FFD600" />
-              {/* Arms */}
-              <ellipse cx="52" cy="170" rx="22" ry="38" fill="#fff" stroke="#333" strokeWidth="2" transform="rotate(-15 52 170)" />
-              <ellipse cx="168" cy="170" rx="22" ry="38" fill="#fff" stroke="#333" strokeWidth="2" transform="rotate(15 168 170)" />
-              {/* Book in hands */}
-              <rect x="88" y="218" width="44" height="32" rx="4" fill="#4CAF50" stroke="#2E7D32" strokeWidth="2" />
-              <rect x="90" y="220" width="20" height="28" rx="2" fill="#81C784" />
-              <line x1="110" y1="220" x2="110" y2="248" stroke="#2E7D32" strokeWidth="1.5" />
-              {/* Stars */}
-              <text x="28" y="215" fontSize="20" fill="#FFD600">⭐</text>
-              <text x="175" y="210" fontSize="18" fill="#FF8F00">✨</text>
-              <text x="100" y="260" fontSize="14" fill="#4CAF50">📖</text>
-            </svg>
+            <Image
+              src="/images/pandas_study.png"
+              alt="Panda Study Mascot"
+              className="panda-svg"
+              width={350}
+              height={400}
+            />
             <span className="stars-deco">⭐</span>
           </div>
         </div>
@@ -172,7 +133,6 @@ export default function Home() {
 
       {/* ABOUT */}
       <section className="about-section" id="tentang">
-        <span className="section-emoji">📱</span>
         <h2 className="section-title">Apa itu SIPANDA?</h2>
         <p className="section-sub">
           <strong>Sistem Informasi Pembelajaran Adaptif berbasis aNalitik DAta siswa</strong> — platform belajar online yang menghubungkan siswa, orang tua, guru, dan kepala sekolah dalam satu ekosistem digital yang menyenangkan!
@@ -396,7 +356,6 @@ export default function Home() {
 
       {/* HOW IT WORKS */}
       <section className="how-section" id="cara-kerja">
-        <span className="section-emoji">🔄</span>
         <h2 className="section-title">Bagaimana Cara Kerjanya?</h2>
         <p className="section-sub">Mulai belajar dengan SIPANDA sangat mudah! Ikuti langkah-langkah berikut ini:</p>
         <div className="steps">
