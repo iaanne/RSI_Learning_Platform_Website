@@ -89,7 +89,7 @@
   }
   .landingPageWrapper  .nav-links a:hover { background: var(--green-light); color: var(--green-dark); }
   .landingPageWrapper .nav-links a.active {
-  color: var(--green-dark);
+  color: #a8ff9e;
 }
 .landingPageWrapper .nav-links a.active::after {
   content: '';
