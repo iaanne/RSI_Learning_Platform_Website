@@ -23,29 +23,18 @@ export default function KelolaMapel() {
   const [mapels, setMapels]   = useState<ClassSubject[]>([]);
   const [loading, setLoading] = useState(true);
 
- useEffect(() => {
+  useEffect(() => {
     fetch("/api/teachers")
-      .then((r) => {
-        if (!r.ok) throw new Error(`Gagal mengambil data (Status: ${r.status})`);
-        return r.json();
-      })
-      .then((res) => {
-        // Membaca format pembungkus data yang baru
-        if (res.success && res.teacher && res.teacher.classSubjects) {
-          setMapels(res.teacher.classSubjects);
-        } else if (Array.isArray(res.teachers)) {
-          // Fallback jika diakses principal/akun testing
-          setMapels(res.teachers[0]?.classSubjects ?? []);
-        } else {
-          setMapels([]);
+      .then(r => r.json())
+      .then((data: any) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setMapels(data[0].classSubjects ?? []);
         }
       })
-      .catch((err) => {
-        console.error("Error load mapel:", err);
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
-  
+
   const DUMMY_MAPELS = ["Matematika", "IPA", "IPS", "Bahasa Indonesia", "PPKn", "Seni Budaya"];
 
   return (
