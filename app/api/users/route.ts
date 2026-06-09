@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/users = create student + parent pair (PRINCIPAL only)
+// POST /api/users = Create Student+Parent OR Teacher (PRINCIPAL only)
 export async function POST(req: NextRequest) {
   try {
     const session = await getSession();
@@ -40,19 +41,53 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { namaSiswa, kelas, namaOrtu, emailOrtu, classId } = body;
-
-    if (!namaSiswa || !kelas || !namaOrtu || !emailOrtu) {
-      return NextResponse.json(
-        { success: false, message: "Semua field wajib diisi" },
-        { status: 400 }
-      );
-    }
+    const { type, name, email, namaSiswa, kelas, namaOrtu, emailOrtu, classId } = body;
 
     const defaultPassword = Math.random().toString(36).slice(-8);
     const passwordHash = await bcrypt.hash(defaultPassword, 12);
 
-    // Generate username
+    // ==========================================
+    // SCENARIO A: MEMBUAT AKUN GURU (TEACHER)
+    // ==========================================
+    if (type === "TEACHER") {
+      if (!name || !email) {
+        return NextResponse.json({ success: false, message: "Nama dan Email guru wajib diisi" }, { status: 400 });
+      }
+
+      const result = await db.$transaction(async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            email: email.toLowerCase(),
+            passwordHash,
+            role: "TEACHER",
+            name,
+            isActive: true,
+          },
+        });
+
+        // OTOMATIS: Membuat data pendamping di tabel Teacher agar tidak memicu error 404 di dashboard guru
+        const teacher = await tx.teacher.create({
+          data: { userId: user.id },
+        });
+
+        return { user, defaultPassword };
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "Akun Guru berhasil dibuat",
+        email: result.user.email,
+        defaultPassword: result.defaultPassword,
+      }, { status: 201 });
+    }
+
+    // ==========================================
+    // SCENARIO B: MEMBUAT AKUN SISWA + ORTU (Bawaan Aslimu)
+    // ==========================================
+    if (!namaSiswa || !kelas || !namaOrtu || !emailOrtu) {
+      return NextResponse.json({ success: false, message: "Field siswa dan orang tua wajib diisi" }, { status: 400 });
+    }
+
     const baseStudentEmail = `${namaSiswa.toLowerCase().replace(/\s+/g, "")}.${kelas.toLowerCase()}@siswa.sch.id`;
     const baseParentEmail  = emailOrtu.toLowerCase();
 
@@ -94,26 +129,21 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      return { parentUser, studentUser, student, defaultPassword };
+      return { parentUser, studentUser, defaultPassword };
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Akun berhasil dibuat",
-        studentEmail:    result.studentUser.email,
-        parentEmail:     result.parentUser.email,
-        defaultPassword: result.defaultPassword,
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({
+      success: true,
+      message: "Akun Siswa & Orang Tua berhasil dibuat",
+      studentEmail:    result.studentUser.email,
+      parentEmail:     result.parentUser.email,
+      defaultPassword: result.defaultPassword,
+    }, { status: 201 });
+
   } catch (error: any) {
     console.error("[USERS_POST]", error);
     if (error?.code === "P2002") {
-      return NextResponse.json(
-        { success: false, message: "Email sudah digunakan" },
-        { status: 409 }
-      );
+      return NextResponse.json({ success: false, message: "Email sudah digunakan" }, { status: 409 });
     }
     return NextResponse.json({ success: false, message: "Gagal membuat akun" }, { status: 500 });
   }

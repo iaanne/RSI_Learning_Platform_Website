@@ -13,73 +13,62 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const includeProgress = searchParams.get("includeProgress") === "true";
 
-    // TEACHER: only see students in their class
-    // PRINCIPAL: see all students
-    let students;
+    let whereClause: any = {}; 
 
     if (session.role === "TEACHER") {
-      // Find teacher record
       const teacher = await db.teacher.findUnique({
         where: { userId: session.userId },
         include: {
-          homeroomClass: true,
+          homeroomClass: { select: { id: true }},
+          classSubjects: { select: { classId: true }},
         },
       });
 
-      if (!teacher || teacher.homeroomClass.length === 0) {
+      if (!teacher) {
         return NextResponse.json([]);
       }
 
-      const classIds = teacher.homeroomClass.map((c) => c.id);
+      const homeroomClassIds = teacher.homeroomClass.map((c) => c.id);
+      const subjectClassIds = teacher.classSubjects.map((cs) => cs.classId);
 
-      students = await db.student.findMany({
-        where: { classId: { in: classIds } },
-        include: {
-          user: { select: { id: true, name: true, email: true } },
-          class: { select: { id: true, name: true } },
-          ...(includeProgress && {
-            progress: {
-              select: {
-                totalScore: true,
-                completionPercent: true,
-                adaptiveLevel: true,
-                lastActivity: true,
-                classSubjectId: true,
-              },
-            },
-          }),
-        },
-        orderBy: { user: { name: "asc" } },
-      });
+      const allClassIds = Array.from(new Set([...homeroomClassIds, ...subjectClassIds])); 
+
+      if (allClassIds.length === 0) {
+        return NextResponse.json([]);
+      }
+
+      whereClause = { classId: { in: allClassIds } };
+
     } else if (session.role === "PRINCIPAL") {
-      students = await db.student.findMany({
-        include: {
-          user: { select: { id: true, name: true, email: true } },
-          class: { select: { id: true, name: true } },
-          ...(includeProgress && {
-            progress: {
-              select: {
-                totalScore: true,
-                completionPercent: true,
-                adaptiveLevel: true,
-                lastActivity: true,
-                classSubjectId: true,
-              },
-            },
-          }),
-        },
-        orderBy: { user: { name: "asc" } },
-      });
-    } else {
       return NextResponse.json({ success: false, message: "Forbidden" }, { status: 403 });
     }
 
-    return NextResponse.json(students);
-  } catch (error) {
-    console.error("[STUDENTS_GET]", error);
-    return NextResponse.json(
-      { success: false, message: "Terjadi kesalahan server" },
-      { status: 500 }
-    );
-  }
-}
+      const students = await db.student.findMany({
+        where: whereClause,
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          class: { select: { id: true, name: true } },
+          ...(includeProgress && {
+            progress: {
+              select: {
+                totalScore: true,
+                completionPercent: true,
+                adaptiveLevel: true,
+                lastActivity: true,
+                classSubjectId: true,
+              },
+            },
+          }),
+        },
+        orderBy: { user: { name: "asc" } },
+      });
+
+      return NextResponse.json(students);
+    } catch (error) {
+      console.error("[STUDENTS_GET]", error);
+      return NextResponse.json(
+        { success: false, message: "Terjadi kesalahan server" },
+        { status: 500 }
+      );
+    }
+  } 

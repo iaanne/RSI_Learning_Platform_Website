@@ -5,7 +5,7 @@ import {
   CheckCircle2, Users, TrendingUp, Eye
 } from "lucide-react";
  
-// Types
+// Types sesuai dengan data terproses dari Prisma Schema
 type StudentRow = {
   id: string;
   name: string;
@@ -34,7 +34,7 @@ function barColor(avg: number) {
   return "bg-[#E53935]";
 }
  
-// Fallback dummy data
+// Fallback dummy data jika API kosong/error
 const DUMMY: StudentRow[] = [
   { id: "1", name: "Talitha Sukma",  avg: 88, status: "Sangat Baik",      completionPercent: 90, adaptiveLevel: "ADVANCED"  },
   { id: "2", name: "Budi Santoso",   avg: 65, status: "Butuh Perhatian",  completionPercent: 45, adaptiveLevel: "REMEDIAL"  },
@@ -42,7 +42,6 @@ const DUMMY: StudentRow[] = [
   { id: "4", name: "Dimas Anggara",  avg: 72, status: "Normal",           completionPercent: 65, adaptiveLevel: "STANDARD"  },
 ];
  
-// Component
 export default function MonitoringSiswa() {
   const [students, setStudents]   = useState<StudentRow[]>([]);
   const [loading, setLoading]     = useState(true);
@@ -59,26 +58,46 @@ export default function MonitoringSiswa() {
  
         if (Array.isArray(data) && data.length > 0) {
           const rows: StudentRow[] = data.map((s: any) => {
-            const totalScore = s.progress?.reduce(
+            const progressArray = s.progress || [];
+            const count = progressArray.length;
+
+            // 1. Hitung rata-rata totalScore dari StudentProgress[]
+            const totalScore = progressArray.reduce(
               (sum: number, p: any) => sum + (p.totalScore ?? 0), 0
-            ) ?? 0;
-            const count = s.progress?.length || 1;
-            const avg   = Math.round(totalScore / count);
+            );
+            const avg = count > 0 ? Math.round(totalScore / count) : 0;
+ 
+            // 2. Hitung rata-rata completionPercent (Prisma Real/Float)
+            const totalCompletion = progressArray.reduce(
+              (sum: number, p: any) => sum + (p.completionPercent ?? 0), 0
+            );
+            const completionPercent = count > 0 ? Math.round(totalCompletion / count) : 0;
+
+            // 3. Ambil adaptiveLevel terakhir dari array progress
+            const adaptiveLevel = count > 0 
+              ? progressArray[count - 1]?.adaptiveLevel ?? "STANDARD"
+              : "STANDARD";
+
             return {
-              id:               s.id,
-              name:             s.user?.name ?? "—",
+              id: s.id,
+              name: s.user?.name ?? "—", // Sesuai relasi model Student ke User
               avg,
-              status:           getStatus(avg),
-              completionPercent: s.progress?.[0]?.completionPercent ?? 0,
-              adaptiveLevel:    s.progress?.[0]?.adaptiveLevel ?? "STANDARD",
+              status: getStatus(avg),
+              completionPercent,
+              adaptiveLevel,
             };
           });
+
+          // Urutkan peringkat berdasarkan rata-rata nilai tertinggi ke terendah
+          rows.sort((a, b) => b.avg - a.avg);
+ 
           setStudents(rows);
         } else {
-          setStudents(DUMMY);
+          setStudents(DUMMY.sort((a, b) => b.avg - a.avg));
         }
-      } catch {
-        setStudents(DUMMY);
+      } catch (err) {
+        console.error(err);
+        setStudents(DUMMY.sort((a, b) => b.avg - a.avg));
       } finally {
         setLoading(false);
       }
@@ -93,7 +112,7 @@ export default function MonitoringSiswa() {
     : "—";
  
   const stats = [
-    { label: "Total Siswa",      value: String(total),     icon: Users,      color: "text-[#2E7D32]",   bg: "bg-[#E8F5E9]"   },
+    { label: "Total Siswa",      value: String(total),     icon: Users,       color: "text-[#2E7D32]",   bg: "bg-[#E8F5E9]"   },
     { label: "Rata-rata Kelas",  value: classAvg,         icon: TrendingUp, color: "text-[#FF8F00]", bg: "bg-[#FFF8E1]" },
     { label: "Butuh Perhatian",  value: String(needHelp), icon: AlertCircle, color: "text-[#E53935]",   bg: "bg-[#FFEBEE]"   },
   ];
@@ -107,7 +126,7 @@ export default function MonitoringSiswa() {
   return (
     <div className="space-y-8">
  
-      {/* Stats */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {stats.map((stat, i) => (
           <div
@@ -125,12 +144,12 @@ export default function MonitoringSiswa() {
         ))}
       </div>
  
-      {/* Header + Search */}
+      {/* Header & Search/Filter Controls */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <h1 className="text-2xl font-black text-[#2E7D32] tracking-tight">Monitoring Siswa 📊</h1>
           <p className="text-[#2E7D32]/70 text-sm font-medium">
-            Data real-time perkembangan kemampuan adaptif siswa.
+            Data real-time perkembangan kemampuan adaptif siswa dari database.
           </p>
         </div>
  
@@ -146,7 +165,6 @@ export default function MonitoringSiswa() {
             />
           </div>
  
-          {/* Filter dropdown */}
           <div className="relative">
             <button
               onClick={() => setShowFilter(v => !v)}
@@ -172,11 +190,11 @@ export default function MonitoringSiswa() {
         </div>
       </div>
  
-      {/* Table */}
+      {/* Students Data Table */}
       <div className="bg-white rounded-[24px] border border-[#E8F5E9] shadow-[0_8px_32px_rgba(0,0,0,0.15)] overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-48 text-[#2E7D32]/50 font-bold">
-            Memuat data siswa...
+            Memuat data siswa dari database...
           </div>
         ) : visible.length === 0 ? (
           <div className="flex items-center justify-center h-48 text-[#2E7D32]/50 font-bold">
@@ -187,7 +205,7 @@ export default function MonitoringSiswa() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#E8F5E9]/50 border-b border-[#E8F5E9]">
-                  {["Nama Siswa", "Status", "Rata-rata", "Progress", "Level Adaptif", "Aksi"].map(h => (
+                  {["Peringkat", "Nama Siswa", "Status", "Rata-rata", "Progress", "Level Adaptif", "Aksi"].map(h => (
                     <th
                       key={h}
                       className="px-8 py-5 text-[11px] font-black text-[#2E7D32]/60 uppercase tracking-[0.2em]"
@@ -198,10 +216,15 @@ export default function MonitoringSiswa() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E8F5E9]/50">
-                {visible.map(s => (
+                {visible.map((s, index) => (
                   <tr key={s.id} className="hover:bg-[#FFFBF0] transition-all group">
+                    
+                    {/* Urutan Peringkat berdasarkan sorting nilai */}
+                    <td className="px-8 py-5 font-black text-[#2E7D32]/60 text-sm">
+                      #{index + 1}
+                    </td>
  
-                    {/* Name */}
+                    {/* Nama Siswa */}
                     <td className="px-8 py-5">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-[#E8F5E9] rounded-full flex items-center justify-center font-black text-[#2E7D32] group-hover:bg-[#4CAF50] group-hover:text-white transition-colors">
@@ -211,7 +234,7 @@ export default function MonitoringSiswa() {
                       </div>
                     </td>
  
-                    {/* Status badge */}
+                    {/* Status Badge */}
                     <td className="px-8 py-5">
                       <span className={`inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tight ${statusStyle(s.status)}`}>
                         {s.status === "Butuh Perhatian"
@@ -221,7 +244,7 @@ export default function MonitoringSiswa() {
                       </span>
                     </td>
  
-                    {/* Avg score */}
+                    {/* Rata-rata Nilai */}
                     <td className="px-8 py-5">
                       <div className="flex flex-col">
                         <span className="font-black text-[#2E7D32] text-lg">{s.avg}%</span>
@@ -234,14 +257,14 @@ export default function MonitoringSiswa() {
                       </div>
                     </td>
  
-                    {/* Completion */}
+                    {/* Progress Penyelesaian */}
                     <td className="px-8 py-5">
                       <span className="font-bold text-[#2E7D32]/80">
-                        {Math.round(s.completionPercent)}%
+                        {s.completionPercent}%
                       </span>
                     </td>
  
-                    {/* Adaptive level */}
+                    {/* Adaptive Level */}
                     <td className="px-8 py-5">
                       <span className={`text-xs font-black px-3 py-1 rounded-lg ${
                         s.adaptiveLevel === "ADVANCED"  ? "bg-[#E3F2FD] text-[#1976D2]" :

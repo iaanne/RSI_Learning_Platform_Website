@@ -267,8 +267,8 @@ export default function KepsekSiswaPage() {
                 <div className="bg-green-50 border border-green-200 rounded-2xl p-5">
                   <p className="font-bold text-green-800 mb-3">✅ Akun berhasil dibuat!</p>
                   <div className="space-y-2 text-sm">
-                    <p><span className="font-bold">Username Siswa:</span> {addResult.usernameSiswa}</p>
-                    <p><span className="font-bold">Username Ortu:</span> {addResult.usernameOrtu}</p>
+                    <p><span className="font-bold">Username Siswa:</span> {(addResult as any).studentEmail ?? addResult.usernameSiswa}</p>
+                    <p><span className="font-bold">Username Ortu:</span> {(addResult as any).parentEmail ?? addResult.usernameOrtu}</p>
                     <p><span className="font-bold">Password Default:</span> <code className="bg-slate-100 px-2 py-0.5 rounded">{addResult.password}</code></p>
                   </div>
                   <p className="text-xs text-green-600 mt-3">Berikan kredensial ini ke keluarga. Mereka wajib ganti password saat login pertama.</p>

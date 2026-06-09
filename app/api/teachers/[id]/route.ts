@@ -1,51 +1,60 @@
+// app/api/teachers/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getSessionFromRequest, requireRole } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSessionFromRequest(req);
-  const guard = requireRole(session, "PRINCIPAL");
-  if (!guard.ok) return NextResponse.json({ error: guard.error }, { status: guard.status });
+export async function GET(req: NextRequest) {
+  try {
+    const session = await getSession();
+    
+    // --- DEBUG LOG ---
+    // Cek terminal VS Code/Server kamu saat refresh halaman mapel
+    console.log("DEBUG SESSION DATA:", session); 
+    
+    if (!session) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    }
 
-  const { id } = await params;
-  const teacher = await db.teacher.findUnique({
-    where: { id },
-    include: {
-      user: { select: { name: true, email: true } },
-      homeroomClass: { select: { name: true } },
-      classSubjects: {
+    // Pastikan role ada sebelum di-toUpperCase
+    const role = session.role ? String(session.role).toUpperCase() : "";
+    console.log("DEBUG ROLE DETECTED:", role);
+
+    // SCENARIO 1: GURU
+    if (role === "TEACHER") {
+      const currentTeacher = await db.teacher.findUnique({
+        where: { userId: session.userId },
         include: {
-          subject: { select: { name: true, code: true } },
-          class: { select: { name: true } },
-          studentProgress: {
-            include: { student: { include: { user: { select: { name: true } } } } },
+          user: { select: { id: true, name: true, email: true, isActive: true } },
+          homeroomClass: { select: { id: true, name: true, gradeLevel: true } },
+          classSubjects: {
+            include: {
+              subject: { select: { name: true } },
+              class:   { select: { name: true } },
+            },
           },
         },
-      },
-    },
-  });
+      });
 
-  if (!teacher) return NextResponse.json({ error: "Guru tidak ditemukan" }, { status: 404 });
+      if (!currentTeacher) {
+        return NextResponse.json({ success: false, message: "Data guru tidak ditemukan" }, { status: 404 });
+      }
 
-  const detail = {
-    name: teacher.user.name,
-    email: teacher.user.email,
-    homeroom: teacher.homeroomClass?.map(c => c.name).join(", ") ?? null,
-    subjects: teacher.classSubjects.map((cs) => ({
-      subject: cs.subject.name,
-      code: cs.subject.code,
-      className: cs.class.name,
-      students: cs.studentProgress.map((sp) => ({
-        name: sp.student.user.name,
-        completionPercent: sp.completionPercent,
-        totalScore: sp.totalScore,
-        adaptiveLevel: sp.adaptiveLevel,
-      })),
-      avgCompletion: cs.studentProgress.length > 0
-        ? Math.round(cs.studentProgress.reduce((s, sp) => s + (sp.completionPercent ?? 0), 0) / cs.studentProgress.length)
-        : 0,
-    })),
-  };
+      return NextResponse.json({ success: true, teacher: currentTeacher });
+    }
 
-  return NextResponse.json({ success: true, data: detail });
+    // SCENARIO 2: PRINCIPAL
+    if (role === "PRINCIPAL") {
+      // ... (kode principal tetap sama)
+      const teachers = await db.teacher.findMany({ /* ... */ });
+      return NextResponse.json({ success: true, teachers: teachers });
+    }
+
+    // Jika sampai di sini, artinya role tidak dikenal
+    console.log("DEBUG: Role tidak dikenal, akses ditolak.");
+    return NextResponse.json({ success: false, message: "Forbidden: Role tidak valid" }, { status: 403 });
+
+  } catch (error) {
+    console.error("[TEACHERS_GET]", error);
+    return NextResponse.json({ success: false, message: "Terjadi kesalahan server" }, { status: 500 });
+  }
 }
