@@ -74,8 +74,14 @@ export default function BelajarPage() {
             <Play size={18} /> Video Pembelajaran
           </h2>
           {material.videos.map((v: any) => (
-            <div key={v.id} className="bg-white rounded-[24px] border border-slate-100 p-4 shadow-sm">
-              <p className="font-bold text-slate-700 mb-2">{v.title}</p>
+            <div
+              key={v.id}
+              className="bg-white rounded-[24px] border border-slate-100 p-4 shadow-sm"
+            >
+              <p className="font-bold text-slate-700 mb-2">
+                {v.title}
+              </p>
+
               <div className="aspect-video rounded-2xl overflow-hidden bg-slate-900">
                 <iframe
                   src={v.embedUrl}
@@ -84,6 +90,36 @@ export default function BelajarPage() {
                   title={v.title}
                 />
               </div>
+
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch(
+                      `/api/videos/${v.id}/complete`,
+                      {
+                        method: "POST",
+                      }
+                    );
+
+                    const data = await res.json();
+
+                    if (data.success) {
+                      alert(
+                        data.alreadyCompleted
+                          ? "Video sudah pernah diselesaikan."
+                          : "Video berhasil diselesaikan! Poin ditambahkan."
+                      );
+                    } else {
+                      alert("Gagal menyimpan progres video.");
+                    }
+                  } catch {
+                    alert("Terjadi kesalahan.");
+                  }
+                }}
+                className="mt-3 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700"
+              >
+                Tandai Selesai
+              </button>
             </div>
           ))}
         </div>
@@ -100,3 +136,4 @@ export default function BelajarPage() {
     </div>
   );
 }
+

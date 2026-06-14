@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
     }
     const body = await req.json();
     const { classSubjectId, title, contentText, orderIndex, difficulty, embedUrl, videoTitle } = body;
+    
     // Validate required fields
     if (!classSubjectId || !title) {
       return NextResponse.json(
